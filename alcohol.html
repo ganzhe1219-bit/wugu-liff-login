@@ -14,9 +14,12 @@
     .btn-fail { display: block; width: 100%; padding: 15px; background: #e74c3c; color: white; border: none; border-radius: 8px; font-size: 18px; font-weight: bold; cursor: pointer; margin-bottom: 15px;}
     .btn-cancel { display: block; width: 100%; padding: 15px; background: #7f8c8d; color: white; border: none; border-radius: 8px; font-size: 18px; font-weight: bold; cursor: pointer; }
     
-    /* 異常數值輸入框樣式 */
     .input-box { width: 100%; padding: 12px; margin-bottom: 20px; border: 2px solid #e74c3c; border-radius: 8px; font-size: 18px; box-sizing: border-box; text-align: center; }
     
+    /* 註冊畫面專用按鈕與輸入框 */
+    .reg-input { width: 100%; padding: 12px; margin-bottom: 20px; border: 2px solid #3498db; border-radius: 8px; font-size: 18px; box-sizing: border-box; text-align: center; }
+    .btn-submit { display: block; width: 100%; padding: 15px; background: #3498db; color: white; border: none; border-radius: 8px; font-size: 18px; font-weight: bold; cursor: pointer; }
+
     #loading { color: #666; margin-bottom: 20px; }
     .hidden { display: none !important; }
   </style>
@@ -24,38 +27,42 @@
 <body>
   <div class="container">
     <h2>🚓 每日酒測登記</h2>
-    <div id="loading">🔄 讀取身分中...</div>
+    <div id="loading">🔄 讀取系統資料中...</div>
     
+    <!-- 註冊綁定區塊 -->
+    <div id="registerUI" class="hidden">
+      <h3 style="color: #3498db;">👋 歡迎！請先綁定姓名</h3>
+      <p style="color: #7f8c8d; font-size: 14px; margin-bottom: 15px;">初次使用系統，請輸入您的真實姓名</p>
+      <input type="text" id="regNameInput" class="reg-input" placeholder="例如：許哲瑋">
+      <button class="btn-submit" onclick="submitRegister()">✅ 確認綁定</button>
+    </div>
+
+    <!-- 測量主要畫面 -->
     <div id="mainUI" class="hidden">
       <div id="driverName">姓名載入中...</div>
       
-      <!-- 第一層：正常/異常 選擇區 -->
       <div id="buttonGroup">
         <button class="btn-pass" onclick="submitPass()">🟢 酒測值為 0</button>
         <button class="btn-fail" onclick="showAbnormalBox()">🔴 含有酒精反應</button>
       </div>
 
-      <!-- 第二層：異常數值填寫區 (預設隱藏) -->
       <div id="abnormalBox" class="hidden">
         <label style="display:block; margin-bottom:10px; font-weight:bold; color:#e74c3c;">請輸入實際酒測數值 (mg/L)：</label>
         <input type="number" id="abnormalValue" class="input-box" step="0.01" placeholder="例如：0.15">
-        
         <button class="btn-fail" onclick="submitAbnormal()">⚠️ 確認送出異常紀錄</button>
         <button class="btn-cancel" onclick="cancelAbnormal()">🔙 返回上一步</button>
       </div>
-      
     </div>
   </div>
 
   <script>
-    // 你的 GAS 網址與 LIFF ID
     const APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbw2VQW2KJiSTz-eMA7NeKDh-9n8l5QXzuHy_ul5w9AJwW3oCEmxqhYXvVYC_znHVQeXaw/exec"; 
     const LIFF_ID = "2011658008-PlEdlKp7"; 
     
     let currentUserId = "";
-    let currentUserName = "";
+    let currentLineName = "";
+    let currentRealName = "";
 
-    // LIFF 初始化
     window.onload = function() {
       liff.init({ liffId: LIFF_ID, withLoginOnExternalBrowser: true })
       .then(() => {
@@ -64,75 +71,109 @@
         } else {
           liff.getProfile().then(profile => {
             currentUserId = profile.userId;
-            currentUserName = profile.displayName;
-            document.getElementById('driverName').innerText = "哈囉，" + currentUserName;
-            document.getElementById('loading').classList.add('hidden');
-            document.getElementById('mainUI').classList.remove('hidden');
-          }).catch(err => alert("無法取得 LINE 資料"));
+            currentLineName = profile.displayName;
+            checkUserExist(); // 向後台檢查是否綁定過
+          });
         }
       });
     };
 
-    // 點擊合格：直接送出
+    // 檢查使用者是否已註冊
+    function checkUserExist() {
+      fetch(APPS_SCRIPT_URL, {
+        method: 'POST',
+        body: JSON.stringify({ action: 'check', userId: currentUserId })
+      })
+      .then(res => res.json())
+      .then(data => {
+        document.getElementById('loading').classList.add('hidden');
+        if (data.realName && data.realName !== "") {
+          // 有找到姓名，直接進入主畫面
+          currentRealName = data.realName;
+          showMainUI();
+        } else {
+          // 沒找到姓名，顯示綁定畫面
+          document.getElementById('registerUI').classList.remove('hidden');
+        }
+      })
+      .catch(err => {
+        alert("連線後台失敗，請重整頁面");
+      });
+    }
+
+    // 提交註冊綁定
+    function submitRegister() {
+      const nameInput = document.getElementById('regNameInput').value.trim();
+      if (!nameInput) return alert("請輸入真實姓名！");
+      
+      document.getElementById('registerUI').innerHTML = "<h3>綁定中，請稍候...</h3>";
+      
+      fetch(APPS_SCRIPT_URL, {
+        method: 'POST',
+        body: JSON.stringify({ action: 'register', userId: currentUserId, realName: nameInput })
+      })
+      .then(res => res.json())
+      .then(data => {
+        alert("✅ 綁定成功！");
+        currentRealName = nameInput;
+        document.getElementById('registerUI').classList.add('hidden');
+        showMainUI();
+      });
+    }
+
+    function showMainUI() {
+      document.getElementById('driverName').innerText = "哈囉，" + currentRealName;
+      document.getElementById('mainUI').classList.remove('hidden');
+    }
+
     function submitPass() {
       sendDataToGAS('數值為 0 (合格)', '');
     }
 
-    // 點擊異常：切換畫面
     function showAbnormalBox() {
       document.getElementById('buttonGroup').classList.add('hidden');
       document.getElementById('abnormalBox').classList.remove('hidden');
     }
 
-    // 在異常畫面點擊返回
     function cancelAbnormal() {
       document.getElementById('buttonGroup').classList.remove('hidden');
       document.getElementById('abnormalBox').classList.add('hidden');
-      document.getElementById('abnormalValue').value = ''; // 清空輸入框
+      document.getElementById('abnormalValue').value = ''; 
     }
 
-    // 確認送出異常數值
     function submitAbnormal() {
       const numValue = document.getElementById('abnormalValue').value;
-      if (!numValue) {
-        alert("請輸入酒測數值！");
-        return;
-      }
-      // 將數字打包成備註格式
-      const noteString = "數值：" + numValue + " mg/L";
-      sendDataToGAS('含有酒精反應 (異常)', noteString);
+      if (!numValue) return alert("請輸入酒測數值！");
+      sendDataToGAS('含有酒精反應 (異常)', "數值：" + numValue + " mg/L");
     }
 
-    // 共用的資料傳送函數
     function sendDataToGAS(resultValue, noteValue) {
-      // 鎖定所有按鈕防止重複點擊
       const buttons = document.querySelectorAll('button');
       buttons.forEach(btn => btn.disabled = true);
       document.getElementById('driverName').innerText = "資料傳送中...";
 
-      // 將原本的資料結構加上 note
       const formData = {
+        action: 'submit',
         userId: currentUserId,
-        driverName: currentUserName,
+        driverName: currentRealName,
+        lineDisplayName: currentLineName,
         result: resultValue,
-        note: noteValue // 這裡的 note 會傳遞給你的 GAS
+        note: noteValue
       };
 
       fetch(APPS_SCRIPT_URL, {
         method: 'POST',
-        mode: 'no-cors',
-        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(formData)
       })
-      .then(() => {
+      .then(res => res.json())
+      .then(data => {
         alert('✅ 酒測紀錄已送出！');
-        liff.closeWindow(); // 送出後自動關閉
+        liff.closeWindow(); 
       })
       .catch(error => {
         alert('❌ 傳送失敗，請檢查網路');
-        // 恢復按鈕狀態
         buttons.forEach(btn => btn.disabled = false);
-        document.getElementById('driverName').innerText = "哈囉，" + currentUserName;
+        document.getElementById('driverName').innerText = "哈囉，" + currentRealName;
       });
     }
   </script>
