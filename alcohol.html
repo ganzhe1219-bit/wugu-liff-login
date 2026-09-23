@@ -11,9 +11,14 @@
     h2 { color: #2c3e50; margin-bottom: 5px; }
     #driverName { font-size: 24px; font-weight: bold; color: #2980b9; margin-bottom: 20px; }
     .btn-pass { display: block; width: 100%; padding: 20px; background: #27ae60; color: white; border: none; border-radius: 8px; font-size: 22px; font-weight: bold; cursor: pointer; margin-bottom: 15px; }
-    .btn-fail { display: block; width: 100%; padding: 15px; background: #e74c3c; color: white; border: none; border-radius: 8px; font-size: 18px; font-weight: bold; cursor: pointer; }
+    .btn-fail { display: block; width: 100%; padding: 15px; background: #e74c3c; color: white; border: none; border-radius: 8px; font-size: 18px; font-weight: bold; cursor: pointer; margin-bottom: 15px;}
+    .btn-cancel { display: block; width: 100%; padding: 15px; background: #7f8c8d; color: white; border: none; border-radius: 8px; font-size: 18px; font-weight: bold; cursor: pointer; }
+    
+    /* 異常數值輸入框樣式 */
+    .input-box { width: 100%; padding: 12px; margin-bottom: 20px; border: 2px solid #e74c3c; border-radius: 8px; font-size: 18px; box-sizing: border-box; text-align: center; }
+    
     #loading { color: #666; margin-bottom: 20px; }
-    .hidden { display: none; }
+    .hidden { display: none !important; }
   </style>
 </head>
 <body>
@@ -23,21 +28,34 @@
     
     <div id="mainUI" class="hidden">
       <div id="driverName">姓名載入中...</div>
-      <!-- 點擊按鈕直接送出結果 -->
-      <button class="btn-pass" onclick="submitResult('數值為 0 (合格)')">🟢 酒測值為 0</button>
-      <button class="btn-fail" onclick="submitResult('含有酒精反應 (異常)')">🔴 含有酒精反應</button>
+      
+      <!-- 第一層：正常/異常 選擇區 -->
+      <div id="buttonGroup">
+        <button class="btn-pass" onclick="submitPass()">🟢 酒測值為 0</button>
+        <button class="btn-fail" onclick="showAbnormalBox()">🔴 含有酒精反應</button>
+      </div>
+
+      <!-- 第二層：異常數值填寫區 (預設隱藏) -->
+      <div id="abnormalBox" class="hidden">
+        <label style="display:block; margin-bottom:10px; font-weight:bold; color:#e74c3c;">請輸入實際酒測數值 (mg/L)：</label>
+        <input type="number" id="abnormalValue" class="input-box" step="0.01" placeholder="例如：0.15">
+        
+        <button class="btn-fail" onclick="submitAbnormal()">⚠️ 確認送出異常紀錄</button>
+        <button class="btn-cancel" onclick="cancelAbnormal()">🔙 返回上一步</button>
+      </div>
+      
     </div>
   </div>
 
   <script>
-    // 👇 1. 貼上你剛剛部署的酒測 GAS 網址 👇
+    // 你的 GAS 網址與 LIFF ID
     const APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbw2VQW2KJiSTz-eMA7NeKDh-9n8l5QXzuHy_ul5w9AJwW3oCEmxqhYXvVYC_znHVQeXaw/exec"; 
-    // 👇 2. 貼上你等一下去 LINE Developers 申請的新 LIFF ID 👇
     const LIFF_ID = "2011658008-PlEdlKp7"; 
     
     let currentUserId = "";
     let currentUserName = "";
 
+    // LIFF 初始化
     window.onload = function() {
       liff.init({ liffId: LIFF_ID, withLoginOnExternalBrowser: true })
       .then(() => {
@@ -55,16 +73,49 @@
       });
     };
 
-    function submitResult(resultValue) {
-      // 避免重複點擊
-      document.querySelector('.btn-pass').disabled = true;
-      document.querySelector('.btn-fail').disabled = true;
+    // 點擊合格：直接送出
+    function submitPass() {
+      sendDataToGAS('數值為 0 (合格)', '');
+    }
+
+    // 點擊異常：切換畫面
+    function showAbnormalBox() {
+      document.getElementById('buttonGroup').classList.add('hidden');
+      document.getElementById('abnormalBox').classList.remove('hidden');
+    }
+
+    // 在異常畫面點擊返回
+    function cancelAbnormal() {
+      document.getElementById('buttonGroup').classList.remove('hidden');
+      document.getElementById('abnormalBox').classList.add('hidden');
+      document.getElementById('abnormalValue').value = ''; // 清空輸入框
+    }
+
+    // 確認送出異常數值
+    function submitAbnormal() {
+      const numValue = document.getElementById('abnormalValue').value;
+      if (!numValue) {
+        alert("請輸入酒測數值！");
+        return;
+      }
+      // 將數字打包成備註格式
+      const noteString = "數值：" + numValue + " mg/L";
+      sendDataToGAS('含有酒精反應 (異常)', noteString);
+    }
+
+    // 共用的資料傳送函數
+    function sendDataToGAS(resultValue, noteValue) {
+      // 鎖定所有按鈕防止重複點擊
+      const buttons = document.querySelectorAll('button');
+      buttons.forEach(btn => btn.disabled = true);
       document.getElementById('driverName').innerText = "資料傳送中...";
 
+      // 將原本的資料結構加上 note
       const formData = {
         userId: currentUserId,
         driverName: currentUserName,
-        result: resultValue
+        result: resultValue,
+        note: noteValue // 這裡的 note 會傳遞給你的 GAS
       };
 
       fetch(APPS_SCRIPT_URL, {
@@ -79,6 +130,9 @@
       })
       .catch(error => {
         alert('❌ 傳送失敗，請檢查網路');
+        // 恢復按鈕狀態
+        buttons.forEach(btn => btn.disabled = false);
+        document.getElementById('driverName').innerText = "哈囉，" + currentUserName;
       });
     }
   </script>
