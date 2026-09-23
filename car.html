@@ -6,25 +6,42 @@
   <title>每日車輛作業前自動檢查表</title>
   <script charset="utf-8" src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
   <style>
-  body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; padding: 12px; background: #f4f4f9; color: #111; margin: 0; }
-  .container { max-width: 600px; margin: auto; background: white; padding: 25px 20px; border-radius: 12px; box-shadow: 0 4px 10px rgba(0,0,0,0.05); }
-  h2 { color: #2c3e50; text-align: center; margin-bottom: 25px; font-size: 30px; border-bottom: 3px solid #3498db; padding-bottom: 15px; font-weight: 900;}
-  .form-group { margin-bottom: 28px; }
-  /* 題目字體放大、加深 */
-  label { display: block; margin-bottom: 12px; font-weight: 900; font-size: 24px; line-height: 1.5; color: #000;}
-  /* 輸入框與下拉選單放大 */
-  input, select, textarea { width: 100%; padding: 18px; border: 2px solid #aaa; border-radius: 8px; box-sizing: border-box; font-size: 24px; background: #fff;}
-  input:read-only { background-color: #e9ecef; }
-  /* 選項按鈕放大與加高 */
-  .btn-group { display: flex; gap: 12px; flex-wrap: wrap; }
-  .check-btn { flex: 1; padding: 22px 10px; border: 2px solid #aaa; border-radius: 10px; text-align: center; cursor: pointer; font-weight: 900; min-width: 85px; font-size: 22px;}
+  body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; padding: 10px; background: #f4f4f9; color: #111; margin: 0; }
+  .container { max-width: 600px; margin: auto; background: white; padding: 20px 15px; border-radius: 12px; box-shadow: 0 4px 10px rgba(0,0,0,0.05); }
+  h2 { color: #2c3e50; text-align: center; margin-bottom: 20px; font-size: 28px; border-bottom: 3px solid #3498db; padding-bottom: 12px; font-weight: 900;}
+  .form-group { margin-bottom: 22px; }
+  
+  /* 題目字體放大、加深，稍微縮小行距讓表單緊湊 */
+  label { display: block; margin-bottom: 10px; font-weight: 900; font-size: 22px; line-height: 1.4; color: #000;}
+  
+  input, select, textarea { width: 100%; padding: 16px; border: 2px solid #aaa; border-radius: 8px; box-sizing: border-box; font-size: 22px; background: #fff;}
+  input:read-only { background-color: #e9ecef; color: #333; }
+  
+  /* ================= 按鈕排版魔法區 ================= */
+  /* 讓三顆按鈕在同一橫排，且高度自動對齊 */
+  .btn-group { display: flex; gap: 8px; align-items: stretch; }
+  
+  /* 按鈕共用設定：內容絕對置中、粗體 */
+  .check-btn { border: 2px solid #aaa; border-radius: 10px; text-align: center; cursor: pointer; font-weight: 900; display: flex; align-items: center; justify-content: center; transition: 0.2s;}
+  
+  /* 1. 【正常】按鈕：佔據約 60% 寬度，超大字體 */
+  .check-btn:nth-child(1) { flex: 3; padding: 20px 5px; font-size: 36px; letter-spacing: 2px; }
+  
+  /* 2. 【異常】按鈕：佔據約 20% 寬度，適中字體 */
+  .check-btn:nth-child(2) { flex: 1; padding: 10px 5px; font-size: 20px; }
+  
+  /* 3. 【無此項】按鈕：佔據約 20% 寬度，字體稍小以容納三個字 */
+  .check-btn:nth-child(3) { flex: 1.2; padding: 10px 2px; font-size: 18px; }
+  /* ================================================= */
+
+  /* 選中時的顏色變化 */
   .check-btn.active.normal { background: #2ecc71; color: white; border-color: #27ae60; }
   .check-btn.active.abnormal { background: #e74c3c; color: white; border-color: #c0392b; }
   .check-btn.active.na { background: #95a5a6; color: white; border-color: #7f8c8d; }
-  /* 主要按鈕放大 */
-  .btn-submit { display: block; width: 100%; padding: 22px; background: #3498db; color: white; border: none; border-radius: 10px; font-size: 26px; font-weight: 900; margin-top: 35px; }
-  .btn-fast { display: block; width: 100%; padding: 20px; background: #f39c12; color: white; border: none; border-radius: 10px; font-size: 24px; font-weight: 900; margin-bottom: 30px; }
-  #loading, #registerBox { text-align: center; padding: 40px 20px; font-size: 24px; font-weight: bold; }
+  
+  .btn-submit { display: block; width: 100%; padding: 20px; background: #3498db; color: white; border: none; border-radius: 10px; font-size: 26px; font-weight: 900; margin-top: 30px; }
+  .btn-fast { display: block; width: 100%; padding: 18px; background: #f39c12; color: white; border: none; border-radius: 10px; font-size: 24px; font-weight: 900; margin-bottom: 20px; box-shadow: 0 4px 6px rgba(0,0,0,0.1);}
+  #loading, #registerBox { text-align: center; padding: 30px 10px; font-size: 24px; font-weight: bold; }
   .hidden { display: none; }
 </style>
 </head>
