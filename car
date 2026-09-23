@@ -1,0 +1,225 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>每日車輛作業前自動檢查表</title>
+  <script charset="utf-8" src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
+  <style>
+    body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; padding: 15px; background: #f4f4f9; color: #333; margin: 0; }
+    .container { max-width: 600px; margin: auto; background: white; padding: 20px; border-radius: 12px; box-shadow: 0 4px 10px rgba(0,0,0,0.05); }
+    h2 { color: #2c3e50; text-align: center; margin-bottom: 20px; font-size: 20px; border-bottom: 2px solid #3498db; padding-bottom: 10px;}
+    .form-group { margin-bottom: 18px; }
+    label { display: block; margin-bottom: 8px; font-weight: bold; font-size: 15px;}
+    input, select, textarea { width: 100%; padding: 12px; border: 1px solid #ddd; border-radius: 6px; box-sizing: border-box; font-size: 16px;}
+    input:read-only { background-color: #e9ecef; }
+    .btn-group { display: flex; gap: 8px; flex-wrap: wrap; }
+    .check-btn { flex: 1; padding: 10px; border: 1px solid #ccc; border-radius: 6px; text-align: center; cursor: pointer; font-weight: bold; min-width: 80px;}
+    .check-btn.active.normal { background: #2ecc71; color: white; border-color: #27ae60; }
+    .check-btn.active.abnormal { background: #e74c3c; color: white; border-color: #c0392b; }
+    .check-btn.active.na { background: #95a5a6; color: white; border-color: #7f8c8d; }
+    .btn-submit { display: block; width: 100%; padding: 16px; background: #3498db; color: white; border: none; border-radius: 6px; font-size: 18px; font-weight: bold; margin-top: 20px; }
+    .btn-fast { display: block; width: 100%; padding: 12px; background: #f39c12; color: white; border: none; border-radius: 6px; font-size: 16px; font-weight: bold; margin-bottom: 20px; }
+    #loading, #registerBox { text-align: center; padding: 30px; }
+    .hidden { display: none; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h2>🛠️ 車輛作業前自動檢查表</h2>
+    
+    <div id="loading"><p>🔄 系統載入與身分驗證中...</p></div>
+    
+    <div id="registerBox" class="hidden">
+      <h3>👋 歡迎！初次使用請綁定</h3>
+      <div class="form-group" style="text-align: left;">
+        <label>真實姓名：</label>
+        <input type="text" id="regName" placeholder="請輸入真實姓名">
+      </div>
+      <button class="btn-submit" onclick="submitRegistration()">完成綁定</button>
+    </div>
+
+    <form id="checkForm" class="hidden" onsubmit="submitForm(event)">
+      <div class="form-group"><label>駕駛姓名：</label><input type="text" id="driverName" readonly></div>
+      <div class="form-group">
+        <label>車輛類型：</label>
+        <select id="vehicleType" onchange="loadVehiclesAndQuestions()" required>
+          <option value="">-- 請選擇 --</option>
+          <option value="一般車輛">一般車輛</option>
+          <option value="抓斗車">抓斗車</option>
+          <option value="堆高機">堆高機</option>
+          <option value="高空作業車">高空作業車</option>
+          <option value="車輛系營建機械">車輛系營建機械</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label>車號 / 機具編號：</label>
+        <select id="vehicleNo" required><option value="">-- 先選擇車輛類型 --</option></select>
+      </div>
+
+      <div id="questionsArea" class="hidden">
+        <button type="button" class="btn-fast" onclick="setAllNormal()">⚡ 一鍵全正常</button>
+        <div id="dynamicQuestions"></div>
+      </div>
+
+      <div class="form-group hidden" id="memoGroup" style="margin-top:20px;">
+        <label style="color: #e74c3c;">⚠️ 發現異常！請說明故障狀況：</label>
+        <textarea id="note" rows="3" placeholder="請描述異常情況..."></textarea>
+      </div>
+      <button type="submit" class="btn-submit" id="submitBtn">確認送出</button>
+    </form>
+  </div>
+
+  <script>
+    // 👇👇👇 請換成你剛剛部署的 GAS 網址 與 LIFF ID 👇👇👇
+    const APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxD4AxVdWSMoFaawgupU2UqXgWr4-Ji1uoaud8U8SIVu-0tet8t2ZSa2Qwwi-T7LSkD/exec"; 
+    const LIFF_ID = "2011658008-7vfc1d6q"; 
+    
+    const db = {
+      "一般車輛": { cars: ["025-BX","026-BX","029-BY","042-R5","067-TH","095-VK","120-VK","128-BY","1457-L2","193-BX","195-BX","201-BX","225-UY","247-BX","272-BY","286-BY","295-R6","363-BY","4021-T2","4022-T2","4723-K9","412-VK","422-UM","4427-YM","4428-YM","4433-YM","447-R5","4721-K9","477-BX","5502-G3","620-UY","6390-VL","649-SL","650-SL","653-BX","655-BX","677-BX","678-BX","7435-A5","7436-A5","7492-YL","822-TW","8F-9247","9080-RH","9081-RH","912-R7","AAC-298","AAC-791","AKT-2278","ALA-1091","ALA-6913","APG-9263","APK-9072","AXC-1712","AXC-1715","BBN-0971","BBN-0972","BEN-7251","BTB-2892","BTB-2893","BZY-8173","KEC-0719","KEC-0723","KED-0815","KEE-1110","KEG-2050","KEG-2815","KEG-2911","KEJ-3529","KEJ-3697","KEJ-6282","KEL-3996","KEP-7116","KEQ-0239","KEQ-0250","KEQ-0251","KEQ-0252","KEU-3230","KEU-5026","KEU-5231","KEU-5237","KEU-5567","KEU-5569","KEU-5573","KEU-6101","KEV-8665"], questions: ["引擎機油(1-10等分)","儀表操作、指示燈","方向盤","喇叭、車窗試放","遠近光燈、煞車燈","手煞車、腳煞車","後視鏡","雨刷","胎壓、胎紋","輪胎紋路","引擎機油","方向機油","煞車油","油量","電瓶水","水箱冷卻水","擋風玻璃清潔液","警示旋轉燈、蜂鳴器","安全護欄","垃圾壓縮系統","附設加壓系統"] },
+      "抓斗車": { cars: ["KEG-2815","649-SL","912-R7"], questions: ["油壓系統油箱油量正常","油管聯結器等有無漏油","控制裝置運作正常","PTO操作正常","旋轉裝置螺栓鬆動漏油","作業器具安全帽安全帶正常","制動器離合器儀表燈光正常","吊具鋼索有無截斷磨損","過捲及過負荷預防裝置正常","防滑舌片裝置正常","未超過額定荷重","警報控制開關器正常"] },
+      "堆高機": { cars: ["53","61"], questions: ["靜態試拉手煞車","腳煞車系統動態煞車踏板間隙","檢查液壓管路","試踩離合器","車靜止時試搖排檔桿","連結裝置檢查有無異常","各種儀器檢查有無異常","蓄電池檢查有無異常","配線檢查有無異常","控制裝置檢查有無異常"] },
+      "高空作業車": { cars: ["AAC-791"], questions: ["靜態試拉手煞車","檢查腳煞車系統動態","無顯著磨損、剝離、油污","離合器檢查液壓管路","試踩離合器","車靜止時試搖排檔桿","開關或控制器作動狀況正常","各種作業裝備應正常","油箱油量是否正常","配線檢查有無異常"] },
+      "車輛系營建機械": { cars: ["55","56","60","62","挖719"], questions: ["引擎室機油、冷卻水、燃油是否洩漏","冷卻系統是否洩漏及散熱片積泥","末級傳動是否洩漏","鏈輪齒是否磨損","各燈系是否正常","各操作油管及接頭是否正常","煞車制動是否正常","駕駛室清潔與儀錶破損","空氣濾清器運作是否正常","輪胎氣壓是否充足","風扇皮帶龜裂鬆弛","電瓶液面是否於正常","黃油檢注射斗主梢"] }
+    };
+
+    let currentUserId = "";
+    let currentAnswers = [];
+
+    window.onload = function() {
+      liff.init({ liffId: LIFF_ID, withLoginOnExternalBrowser: true })
+        .then(() => {
+          if (!liff.isLoggedIn()) { liff.login(); } 
+          else {
+            liff.getProfile().then(profile => {
+              currentUserId = profile.userId;
+              checkUserStatus();
+            });
+          }
+        }).catch(err => alert("LIFF 載入失敗：" + err));
+    };
+
+    function checkUserStatus() {
+      fetch(APPS_SCRIPT_URL, {
+        method: 'POST',
+        body: JSON.stringify({ action: "checkUser", userId: currentUserId })
+      }).then(res => res.json()).then(data => {
+        document.getElementById('loading').classList.add('hidden');
+        if (data.name) {
+          document.getElementById('driverName').value = data.name;
+          document.getElementById('checkForm').classList.remove('hidden');
+        } else {
+          document.getElementById('registerBox').classList.remove('hidden');
+        }
+      }).catch(err => alert("網路連線錯誤，請重試！"));
+    }
+
+    function submitRegistration() {
+      const name = document.getElementById('regName').value.trim();
+      if (!name) return alert("請填寫姓名！");
+      document.getElementById('regName').disabled = true;
+      
+      fetch(APPS_SCRIPT_URL, {
+        method: 'POST',
+        body: JSON.stringify({ action: "register", userId: currentUserId, name: name })
+      }).then(() => {
+        alert("綁定成功！");
+        document.getElementById('registerBox').classList.add('hidden');
+        document.getElementById('driverName').value = name;
+        document.getElementById('checkForm').classList.remove('hidden');
+      });
+    }
+
+    function loadVehiclesAndQuestions() {
+      const type = document.getElementById('vehicleType').value;
+      const vSelect = document.getElementById('vehicleNo');
+      const qArea = document.getElementById('dynamicQuestions');
+      const qWrap = document.getElementById('questionsArea');
+      
+      vSelect.innerHTML = '<option value="">-- 請選擇 --</option>';
+      qArea.innerHTML = '';
+      currentAnswers = [];
+      document.getElementById('memoGroup').classList.add('hidden');
+      document.getElementById('note').value = '';
+
+      if (!type) { qWrap.classList.add('hidden'); return; }
+
+      db[type].cars.forEach(car => vSelect.innerHTML += `<option value="${car}">${car}</option>`);
+      
+      let html = '';
+      db[type].questions.forEach((q, idx) => {
+        currentAnswers.push(""); 
+        html += `<div class="form-group"><label>${idx + 1}. ${q}</label>`;
+        if(q.includes("1-10等分")) {
+          html += `<select onchange="updateAns(${idx}, this.value)" style="width:100%; border:1px solid #ccc; padding:10px; border-radius:6px;"><option value="">請選擇</option>`;
+          for(let i=1; i<=10; i++) html += `<option value="${i}">${i}</option>`;
+          html += `</select>`;
+        } else {
+          html += `<div class="btn-group">
+                     <div class="check-btn btn-q${idx}" onclick="setAns(${idx}, '正常', this)">正常</div>
+                     <div class="check-btn btn-q${idx}" onclick="setAns(${idx}, '異常', this)">異常</div>
+                     <div class="check-btn btn-q${idx}" onclick="setAns(${idx}, '無此項', this)">無此項</div>
+                   </div>`;
+        }
+        html += `</div>`;
+      });
+      qArea.innerHTML = html;
+      qWrap.classList.remove('hidden');
+    }
+
+    function setAns(idx, val, element) {
+      updateAns(idx, val);
+      document.querySelectorAll('.btn-q' + idx).forEach(btn => btn.classList.remove('active', 'normal', 'abnormal', 'na'));
+      if(val === '正常') element.classList.add('active', 'normal');
+      if(val === '異常') element.classList.add('active', 'abnormal');
+      if(val === '無此項') element.classList.add('active', 'na');
+    }
+
+    function updateAns(idx, val) {
+      currentAnswers[idx] = val;
+      const hasAbnormal = currentAnswers.includes('異常');
+      document.getElementById('memoGroup').classList.toggle('hidden', !hasAbnormal);
+    }
+
+    function setAllNormal() {
+      const type = document.getElementById('vehicleType').value;
+      db[type].questions.forEach((q, idx) => {
+        if(!q.includes("1-10等分")) {
+          const btn = document.querySelector(`.btn-q${idx}`);
+          if(btn) setAns(idx, '正常', btn);
+        }
+      });
+    }
+
+    function submitForm(event) {
+      event.preventDefault();
+      const vNo = document.getElementById('vehicleNo').value;
+      if (!vNo) return alert('請選擇車號！');
+      if (currentAnswers.includes("")) return alert("請確認所有檢查項目皆已點選或填寫！");
+      const hasAbnormal = currentAnswers.includes('異常');
+      const note = document.getElementById('note').value.trim();
+      if (hasAbnormal && !note) return alert("有異常項目，請填寫備註說明！");
+
+      const btn = document.getElementById('submitBtn');
+      btn.disabled = true; btn.innerText = '資料上傳中...';
+
+      const payload = {
+        userId: currentUserId, driverName: document.getElementById('driverName').value,
+        vehicleType: document.getElementById('vehicleType').value, vehicleNo: vNo,
+        answers: currentAnswers, note: note
+      };
+
+      fetch(APPS_SCRIPT_URL, {
+        method: 'POST',
+        body: JSON.stringify({ action: "saveData", data: payload })
+      }).then(() => {
+        alert("✅ 檢查表已成功送出！");
+        liff.closeWindow();
+      }).catch(err => {
+        alert("❌ 送出失敗，請檢查網路連線");
+        btn.disabled = false; btn.innerText = '確認送出';
+      });
+    }
+  </script>
+</body>
+</html>
