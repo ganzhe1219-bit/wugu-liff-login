@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <script charset="utf-8" src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>每日酒測登記</title>
+  <style>
+    body { font-family: -apple-system, sans-serif; padding: 20px; background: #f4f4f9; text-align: center; }
+    .container { max-width: 500px; margin: auto; background: white; padding: 30px; border-radius: 12px; box-shadow: 0 4px 10px rgba(0,0,0,0.05); }
+    h2 { color: #2c3e50; margin-bottom: 5px; }
+    #driverName { font-size: 24px; font-weight: bold; color: #2980b9; margin-bottom: 20px; }
+    .btn-pass { display: block; width: 100%; padding: 20px; background: #27ae60; color: white; border: none; border-radius: 8px; font-size: 22px; font-weight: bold; cursor: pointer; margin-bottom: 15px; }
+    .btn-fail { display: block; width: 100%; padding: 15px; background: #e74c3c; color: white; border: none; border-radius: 8px; font-size: 18px; font-weight: bold; cursor: pointer; }
+    #loading { color: #666; margin-bottom: 20px; }
+    .hidden { display: none; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h2>🚓 每日酒測登記</h2>
+    <div id="loading">🔄 讀取身分中...</div>
+    
+    <div id="mainUI" class="hidden">
+      <div id="driverName">姓名載入中...</div>
+      <!-- 點擊按鈕直接送出結果 -->
+      <button class="btn-pass" onclick="submitResult('數值為 0 (合格)')">🟢 酒測值為 0</button>
+      <button class="btn-fail" onclick="submitResult('含有酒精反應 (異常)')">🔴 含有酒精反應</button>
+    </div>
+  </div>
+
+  <script>
+    // 👇 1. 貼上你剛剛部署的酒測 GAS 網址 👇
+    const APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbw2VQW2KJiSTz-eMA7NeKDh-9n8l5QXzuHy_ul5w9AJwW3oCEmxqhYXvVYC_znHVQeXaw/exec"; 
+    // 👇 2. 貼上你等一下去 LINE Developers 申請的新 LIFF ID 👇
+    const LIFF_ID = "2011658008-PlEdlKp7"; 
+    
+    let currentUserId = "";
+    let currentUserName = "";
+
+    window.onload = function() {
+      liff.init({ liffId: LIFF_ID, withLoginOnExternalBrowser: true })
+      .then(() => {
+        if (!liff.isLoggedIn()) {
+          liff.login();
+        } else {
+          liff.getProfile().then(profile => {
+            currentUserId = profile.userId;
+            currentUserName = profile.displayName;
+            document.getElementById('driverName').innerText = "哈囉，" + currentUserName;
+            document.getElementById('loading').classList.add('hidden');
+            document.getElementById('mainUI').classList.remove('hidden');
+          }).catch(err => alert("無法取得 LINE 資料"));
+        }
+      });
+    };
+
+    function submitResult(resultValue) {
+      // 避免重複點擊
+      document.querySelector('.btn-pass').disabled = true;
+      document.querySelector('.btn-fail').disabled = true;
+      document.getElementById('driverName').innerText = "資料傳送中...";
+
+      const formData = {
+        userId: currentUserId,
+        driverName: currentUserName,
+        result: resultValue
+      };
+
+      fetch(APPS_SCRIPT_URL, {
+        method: 'POST',
+        mode: 'no-cors',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(formData)
+      })
+      .then(() => {
+        alert('✅ 酒測紀錄已送出！');
+        liff.closeWindow(); // 送出後自動關閉
+      })
+      .catch(error => {
+        alert('❌ 傳送失敗，請檢查網路');
+      });
+    }
+  </script>
+</body>
+</html>
