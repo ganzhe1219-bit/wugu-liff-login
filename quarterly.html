@@ -24,7 +24,6 @@
     .clear-btn { background: #95a5a6; color: white; border: none; padding: 12px 15px; border-radius: 8px; cursor: pointer; font-size: 16px; font-weight: bold; width: 100%; margin-top: 5px;}
     
     .btn-submit { width: 100%; padding: 20px; background: #3498db; color: white; border: none; border-radius: 10px; font-size: 24px; font-weight: 900; cursor: pointer; margin-top: 10px; transition: 0.3s; }
-    /* 👇 新增：按鈕被鎖死時變成灰色，游標變成禁止圖示 */
     .btn-submit:disabled { background: #95a5a6; cursor: not-allowed; }
     
     #loading { text-align: center; padding: 30px 10px; font-size: 20px; font-weight: bold; }
@@ -82,9 +81,86 @@
           <option value="025-BX">025-BX</option>
           <option value="026-BX">026-BX</option>
           <option value="029-BY">029-BY</option>
+          <option value="042-R5">042-R5</option>
+          <option value="067-TH">067-TH</option>
+          <option value="095-VK">095-VK</option>
+          <option value="120-VK">120-VK</option>
+          <option value="128-BY">128-BY</option>
+          <option value="1457-L2">1457-L2</option>
           <option value="193-BX">193-BX</option>
           <option value="195-BX">195-BX</option>
-          <!-- 若有更多車輛請在此處新增 <option> -->
+          <option value="201-BX">201-BX</option>
+          <option value="225-UY">225-UY</option>
+          <option value="247-BX">247-BX</option>
+          <option value="272-BY">272-BY</option>
+          <option value="286-BY">286-BY</option>
+          <option value="295-R6">295-R6</option>
+          <option value="363-BY">363-BY</option>
+          <option value="4021-T2">4021-T2</option>
+          <option value="4022-T2">4022-T2</option>
+          <option value="4723-K9">4723-K9</option>
+          <option value="412-VK">412-VK</option>
+          <option value="422-UM">422-UM</option>
+          <option value="4427-YM">4427-YM</option>
+          <option value="4428-YM">4428-YM</option>
+          <option value="4433-YM">4433-YM</option>
+          <option value="447-R5">447-R5</option>
+          <option value="4721-K9">4721-K9</option>
+          <option value="477-BX">477-BX</option>
+          <option value="5502-G3">5502-G3</option>
+          <option value="620-UY">620-UY</option>
+          <option value="6390-VL">6390-VL</option>
+          <option value="650-SL">650-SL</option>
+          <option value="653-BX">653-BX</option>
+          <option value="655-BX">655-BX</option>
+          <option value="677-BX">677-BX</option>
+          <option value="678-BX">678-BX</option>
+          <option value="7435-A5">7435-A5</option>
+          <option value="7436-A5">7436-A5</option>
+          <option value="7492-YL">7492-YL</option>
+          <option value="822-TW">822-TW</option>
+          <option value="8F-9247">8F-9247</option>
+          <option value="9080-RH">9080-RH</option>
+          <option value="9081-RH">9081-RH</option>
+          <option value="AAC-298">AAC-298</option>
+          <option value="AKT-2278">AKT-2278</option>
+          <option value="ALA-1091">ALA-1091</option>
+          <option value="ALA-6913">ALA-6913</option>
+          <option value="APG-9263">APG-9263</option>
+          <option value="APK-9072">APK-9072</option>
+          <option value="AXC-1712">AXC-1712</option>
+          <option value="AXC-1715">AXC-1715</option>
+          <option value="BBN-0971">BBN-0971</option>
+          <option value="BBN-0972">BBN-0972</option>
+          <option value="BEN-7251">BEN-7251</option>
+          <option value="BTB-2892">BTB-2892</option>
+          <option value="BTB-2893">BTB-2893</option>
+          <option value="BZY-8173">BZY-8173</option>
+          <option value="KEC-0719">KEC-0719</option>
+          <option value="KEC-0723">KEC-0723</option>
+          <option value="KED-0815">KED-0815</option>
+          <option value="KEE-1110">KEE-1110</option>
+          <option value="KEG-2050">KEG-2050</option>
+          <option value="KEG-2911">KEG-2911</option>
+          <option value="KEJ-3529">KEJ-3529</option>
+          <option value="KEJ-3697">KEJ-3697</option>
+          <option value="KEJ-6282">KEJ-6282</option>
+          <option value="KEL-3996">KEL-3996</option>
+          <option value="KEP-7116">KEP-7116</option>
+          <option value="KEQ-0239">KEQ-0239</option>
+          <option value="KEQ-0250">KEQ-0250</option>
+          <option value="KEQ-0251">KEQ-0251</option>
+          <option value="KEQ-0252">KEQ-0252</option>
+          <option value="KEU-3230">KEU-3230</option>
+          <option value="KEU-5026">KEU-5026</option>
+          <option value="KEU-5231">KEU-5231</option>
+          <option value="KEU-5237">KEU-5237</option>
+          <option value="KEU-5567">KEU-5567</option>
+          <option value="KEU-5569">KEU-5569</option>
+          <option value="KEU-5573">KEU-5573</option>
+          <option value="KEU-6101">KEU-6101</option>
+          <option value="KEV-8665">KEV-8665</option>
+          <option value="KEX-0129">KEX-0129</option>
         </select>
       </div>
       
@@ -106,7 +182,6 @@
         <button type="button" class="clear-btn" onclick="clearCanvas()">✖ 清除重新簽名</button>
       </div>
 
-      <!-- 👇 加上 id 讓程式能抓到它來鎖死 -->
       <button type="submit" id="submitBtn" class="btn-submit">確認送出季檢表</button>
     </form>
   </div>
