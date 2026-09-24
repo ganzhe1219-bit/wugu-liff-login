@@ -1,0 +1,292 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>一般車輛自動檢查表(每季)</title>
+  <style>
+    body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; padding: 15px; background: #f4f5f7; color: #333; margin: 0; }
+    .container { max-width: 600px; margin: auto; background: white; padding: 20px 15px; border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
+    h2 { color: #2c3e50; text-align: center; margin-bottom: 20px; font-size: 22px; border-bottom: 3px solid #3498db; padding-bottom: 10px; font-weight: 900;}
+    .form-group { margin-bottom: 20px; border-bottom: 1px solid #eee; padding-bottom: 15px; }
+    label { display: block; font-weight: bold; color: #111; margin-bottom: 5px; font-size: 18px; }
+    .method { font-size: 14px; color: #666; margin-bottom: 10px; }
+    select, input[type="text"], textarea { width: 100%; padding: 12px; border: 2px solid #ccc; border-radius: 8px; font-size: 16px; box-sizing: border-box; background: #fff;}
+    input:read-only { background-color: #e9ecef; }
+    
+    /* 隱藏的措施區塊 */
+    .action-box { display: none; margin-top: 10px; background: #fff3cd; padding: 12px; border-radius: 8px; border-left: 5px solid #ffc107; }
+    .action-box label { display: inline-block; margin-right: 15px; font-weight: bold; font-size: 16px; color: #856404; margin-top: 5px;}
+    
+    /* 簽名板 */
+    .canvas-container { border: 3px dashed #3498db; border-radius: 8px; background: #fafafa; margin-bottom: 10px; }
+    canvas { width: 100%; height: 200px; display: block; touch-action: none; cursor: crosshair; }
+    .clear-btn { background: #e74c3c; color: white; border: none; padding: 10px 15px; border-radius: 6px; cursor: pointer; float: right; font-weight: bold; }
+    
+    .btn-submit { width: 100%; padding: 18px; background: #27ae60; color: white; border: none; border-radius: 8px; font-size: 20px; font-weight: 900; cursor: pointer; margin-top: 20px; }
+    #loading { text-align: center; padding: 30px 10px; font-size: 20px; font-weight: bold; }
+    .hidden { display: none; }
+  </style>
+  <script charset="utf-8" src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
+</head>
+<body>
+  <div class="container">
+    <h2>📋 一般車輛自動檢查表(每季)</h2>
+    
+    <div id="loading">🔄 正在確認您的 LINE 身分...</div>
+
+    <form id="checkForm" class="hidden" onsubmit="submitForm(event)">
+      <!-- 基本資料 -->
+      <div class="form-group">
+        <label>檢查人員：</label>
+        <input type="text" id="driverName" readonly required>
+      </div>
+      <div class="form-group">
+        <label>車牌號碼：</label>
+        <select id="vehicleId" required>
+          <option value="">請選擇車輛</option>
+          <option value="025-BX">025-BX</option>
+          <option value="026-BX">026-BX</option>
+          <option value="029-BY">029-BY</option>
+          <!-- 若有更多車輛請在此處新增 <option> -->
+        </select>
+      </div>
+
+      <!-- 檢查項目區塊 -->
+      <div id="inspectionItems"></div>
+
+      <!-- 改善措施 -->
+      <div class="form-group" style="border: none;">
+        <label>檢查結果採取或建議之改善措施：</label>
+        <textarea id="measureNote" rows="3" placeholder="請填寫改善措施或建議..."></textarea>
+      </div>
+
+      <!-- 簽名板 -->
+      <div class="form-group" style="border: none;">
+        <label>✍️ 檢查人員簽名 (必填)：</label>
+        <div class="canvas-container">
+          <canvas id="sigCanvas"></canvas>
+        </div>
+        <button type="button" class="clear-btn" onclick="clearCanvas()">✖ 重新簽名</button>
+        <div style="clear: both;"></div>
+      </div>
+
+      <button type="submit" class="btn-submit">確認送出季檢表</button>
+    </form>
+  </div>
+
+  <script>
+    // 👇👇👇 請在此替換你的設定 👇👇👇
+    const GAS_URL = "你的_GAS_網址"; 
+    const LIFF_ID = "你的季檢表_LIFF_ID"; 
+    
+    const itemsData = [
+      { id: "item1", name: "1. 胎壓", method: "初步目視、敲打測試", options: ["正常", "過低", "無此項"], trigger: "過低" },
+      { id: "item2", name: "2. 輪胎紋路", method: "不得低於 2mm", options: ["正常", "過低", "無此項"], trigger: "過低" },
+      { id: "item3", name: "3. 監視主機", method: "畫質、訊號清晰", options: ["正常", "異常", "無此項"], trigger: "異常" },
+      { id: "item4", name: "4. 引擎機油液位", method: "量尺上下刻度", options: ["正常", "過低", "無此項"], trigger: "過低" },
+      { id: "item5", name: "5. 煞車油液位", method: "量尺上下刻度", options: ["正常", "過低", "無此項"], trigger: "過低" },
+      { id: "item6", name: "6. 動力方向機油液位", method: "量尺上下刻度", options: ["正常", "過低", "無此項"], trigger: "過低" },
+      { id: "item7", name: "7. 電瓶水液位檢查", method: "量尺上下刻度", options: ["正常", "過低", "無此項"], trigger: "過低" },
+      { id: "item8_1", name: "8. 雨刷水", method: "上下限刻度", options: ["正常", "過低", "無此項"], trigger: "過低" },
+      { id: "item8_2", name: "8. 水箱水位檢查", method: "量尺上下刻度", options: ["正常", "異常", "無此項"], trigger: "異常" },
+      { id: "item9", name: "9. 變速箱、P.T.O(扭力轉換器)、差速器", method: "目視、運轉測試", options: ["正常", "過低", "無此項"], trigger: "過低" },
+      { id: "item10", name: "10. 減震鋼板", method: "異常凸起、變形斷裂", options: ["良好", "斷裂", "無此項"], trigger: "斷裂" },
+      { id: "item11", name: "11. 附屬設備安全裝置", method: "滅火器、急救箱、安全帶", options: ["正常", "過低", "無此項"], trigger: "過低" },
+      { id: "item12", name: "12. 燈光、警示系統", method: "方向燈、遠近光等", options: ["正常", "異常", "無此項"], trigger: "異常" }
+    ];
+
+    const container = document.getElementById('inspectionItems');
+    itemsData.forEach(item => {
+      let optionsHtml = item.options.map(opt => `<option value="${opt}">${opt}</option>`).join('');
+      let html = `
+        <div class="form-group">
+          <label>${item.name}</label>
+          <div class="method">檢查方法：${item.method}</div>
+          <select id="${item.id}" onchange="checkStatus('${item.id}', '${item.trigger}')" required>
+            <option value="">請選擇檢查結果...</option>
+            ${optionsHtml}
+          </select>
+          <div id="${item.id}_action" class="action-box">
+            <div style="margin-bottom: 5px; font-weight: bold; color: #d35400;">⚠️ 請勾選異常處理措施：</div>
+            <label><input type="radio" name="${item.id}_radio" value="自行修復"> 自行修復</label>
+            <label><input type="radio" name="${item.id}_radio" value="進廠檢修"> 進廠檢修</label>
+          </div>
+        </div>`;
+      container.innerHTML += html;
+    });
+
+    window.checkStatus = function(id, triggerWord) {
+      const val = document.getElementById(id).value;
+      const actionBox = document.getElementById(id + "_action");
+      const radios = document.getElementsByName(id + "_radio");
+      if (val === triggerWord) {
+        actionBox.style.display = "block";
+        radios.forEach(r => r.required = true);
+      } else {
+        actionBox.style.display = "none";
+        radios.forEach(r => { r.required = false; r.checked = false; });
+      }
+    };
+
+    const canvas = document.getElementById('sigCanvas');
+    const ctx = canvas.getContext('2d');
+    let isDrawing = false;
+    let hasSigned = false;
+    
+    function resizeCanvas() {
+      const rect = canvas.parentElement.getBoundingClientRect();
+      canvas.width = rect.width;
+      canvas.height = 200;
+      ctx.fillStyle = '#fff';
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+      ctx.lineWidth = 4;
+      ctx.lineCap = 'round';
+      ctx.strokeStyle = '#000';
+      hasSigned = false;
+    }
+    window.addEventListener('resize', resizeCanvas);
+    
+    function getCoords(e) {
+      const rect = canvas.getBoundingClientRect();
+      if (e.touches && e.touches.length > 0) {
+        return { x: e.touches[0].clientX - rect.left, y: e.touches[0].clientY - rect.top };
+      }
+      return { x: e.offsetX, y: e.offsetY };
+    }
+
+    function startDrawing(e) {
+      isDrawing = true; hasSigned = true;
+      const pos = getCoords(e);
+      ctx.beginPath(); ctx.moveTo(pos.x, pos.y);
+      e.preventDefault();
+    }
+    
+    function draw(e) {
+      if (!isDrawing) return;
+      const pos = getCoords(e);
+      ctx.lineTo(pos.x, pos.y); ctx.stroke();
+      e.preventDefault();
+    }
+    
+    function stopDrawing() { isDrawing = false; ctx.closePath(); }
+    
+    canvas.addEventListener('mousedown', startDrawing);
+    canvas.addEventListener('mousemove', draw);
+    canvas.addEventListener('mouseup', stopDrawing);
+    canvas.addEventListener('mouseout', stopDrawing);
+    canvas.addEventListener('touchstart', startDrawing, {passive: false});
+    canvas.addEventListener('touchmove', draw, {passive: false});
+    canvas.addEventListener('touchend', stopDrawing);
+    canvas.addEventListener('touchcancel', stopDrawing);
+    
+    window.clearCanvas = function() {
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+      hasSigned = false;
+    };
+
+    let currentUserId = "";
+
+    window.onload = function() {
+      resizeCanvas();
+      liff.init({ liffId: LIFF_ID, withLoginOnExternalBrowser: true })
+        .then(() => {
+          if (!liff.isLoggedIn()) {
+            liff.login();
+          } else {
+            liff.getProfile().then(profile => {
+              currentUserId = profile.userId;
+              checkUserFromGAS(currentUserId);
+            });
+          }
+        }).catch(err => alert("LIFF 錯誤: " + err));
+    };
+
+    function checkUserFromGAS(userId) {
+      fetch(GAS_URL, {
+        method: 'POST',
+        headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+        body: JSON.stringify({ action: "checkUser", userId: userId })
+      })
+      .then(res => res.json())
+      .then(data => {
+        document.getElementById('loading').classList.add('hidden');
+        if (data.name) {
+          document.getElementById('driverName').value = data.name;
+          document.getElementById('checkForm').classList.remove('hidden');
+        } else {
+          alert("找不到此 LINE ID 的綁定資料，請先在每日系統完成註冊！");
+        }
+      })
+      .catch(err => alert("網路連線錯誤：" + err));
+    }
+
+    function getCombinedResult(id) {
+      const mainResult = document.getElementById(id).value;
+      const actionBox = document.getElementById(id + "_action");
+      if (actionBox.style.display === "block") {
+        const selectedRadio = document.querySelector(`input[name="${id}_radio"]:checked`);
+        if (selectedRadio) {
+          return mainResult + " (" + selectedRadio.value + ")";
+        }
+      }
+      return mainResult;
+    }
+
+    function submitForm(event) {
+      event.preventDefault();
+      
+      if (!hasSigned) {
+        alert("📝 請在最下方框框內親筆簽名！");
+        return;
+      }
+
+      const btn = document.querySelector('.btn-submit');
+      btn.disabled = true; 
+      btn.innerText = "資料上傳中...(含圖片)";
+
+      const formData = {
+        driverName: document.getElementById('driverName').value,
+        vehicleId: document.getElementById('vehicleId').value,
+        item1: getCombinedResult("item1"),
+        item2: getCombinedResult("item2"),
+        item3: getCombinedResult("item3"),
+        item4: getCombinedResult("item4"),
+        item5: getCombinedResult("item5"),
+        item6: getCombinedResult("item6"),
+        item7: getCombinedResult("item7"),
+        item8_1: getCombinedResult("item8_1"),
+        item8_2: getCombinedResult("item8_2"),
+        item9: getCombinedResult("item9"),
+        item10: getCombinedResult("item10"),
+        item11: getCombinedResult("item11"),
+        item12: getCombinedResult("item12"),
+        measureNote: document.getElementById('measureNote').value,
+        signature: canvas.toDataURL("image/png")
+      };
+
+      fetch(GAS_URL, {
+        method: 'POST',
+        headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+        body: JSON.stringify({ action: "saveQuarterly", data: formData })
+      })
+      .then(res => res.json())
+      .then(result => {
+        if (result.status === "Success") {
+          alert("✅ 季檢紀錄與簽名已成功送出！");
+          liff.closeWindow();
+        } else {
+          alert("❌ 儲存失敗：" + result.status);
+          btn.disabled = false;
+          btn.innerText = "確認送出季檢表";
+        }
+      })
+      .catch(err => {
+        alert("❌ 送出失敗: " + err.message);
+        btn.disabled = false;
+        btn.innerText = "確認送出季檢表";
+      });
+    }
+  </script>
+</body>
+</html>
