@@ -23,7 +23,10 @@
     canvas { width: 100%; height: 200px; display: block; touch-action: none; cursor: crosshair; }
     .clear-btn { background: #95a5a6; color: white; border: none; padding: 12px 15px; border-radius: 8px; cursor: pointer; font-size: 16px; font-weight: bold; width: 100%; margin-top: 5px;}
     
-    .btn-submit { width: 100%; padding: 20px; background: #3498db; color: white; border: none; border-radius: 10px; font-size: 24px; font-weight: 900; cursor: pointer; margin-top: 10px; }
+    .btn-submit { width: 100%; padding: 20px; background: #3498db; color: white; border: none; border-radius: 10px; font-size: 24px; font-weight: 900; cursor: pointer; margin-top: 10px; transition: 0.3s; }
+    /* 👇 新增：按鈕被鎖死時變成灰色，游標變成禁止圖示 */
+    .btn-submit:disabled { background: #95a5a6; cursor: not-allowed; }
+    
     #loading { text-align: center; padding: 30px 10px; font-size: 20px; font-weight: bold; }
     .hidden { display: none; }
 
@@ -63,7 +66,7 @@
         <input type="text" id="regName" placeholder="例如：王小明" required>
         <div style="font-size: 14px; color: #e74c3c; margin-top: 8px;">⚠️ 請務必填寫正確真實姓名，送出後若需修改請洽管理員。</div>
       </div>
-      <button type="button" class="btn-submit" style="background:#27ae60;" onclick="submitRegistration()">完成綁定並進入</button>
+      <button type="button" class="btn-submit" style="background:#27ae60;" onclick="submitRegistration(event)">完成綁定並進入</button>
     </div>
 
     <form id="checkForm" class="hidden" onsubmit="submitForm(event)">
@@ -103,7 +106,8 @@
         <button type="button" class="clear-btn" onclick="clearCanvas()">✖ 清除重新簽名</button>
       </div>
 
-      <button type="submit" class="btn-submit">確認送出季檢表</button>
+      <!-- 👇 加上 id 讓程式能抓到它來鎖死 -->
+      <button type="submit" id="submitBtn" class="btn-submit">確認送出季檢表</button>
     </form>
   </div>
 
@@ -277,7 +281,7 @@
       .catch(err => alert("網路連線錯誤：" + err));
     }
 
-    function submitRegistration() {
+    function submitRegistration(event) {
       const name = document.getElementById('regName').value.trim();
       if (!name) {
         alert("請輸入真實姓名！");
@@ -286,7 +290,7 @@
 
       const btn = event.target;
       btn.disabled = true;
-      btn.innerText = '綁定中...';
+      btn.innerText = '⏳ 綁定中...';
 
       fetch(GAS_URL, {
         method: 'POST',
@@ -339,9 +343,10 @@
         return;
       }
 
-      const btn = document.querySelector('.btn-submit');
+      // 👇 防呆機制：鎖死按鈕並改變文字
+      const btn = document.getElementById('submitBtn');
       btn.disabled = true; 
-      btn.innerText = "資料上傳中...(含圖片)";
+      btn.innerText = "⏳ 資料上傳中，請稍候...";
 
       const formData = {
         driverName: document.getElementById('driverName').value,
@@ -372,22 +377,19 @@
       .then(result => {
         if (result.status === "Success") {
           alert("✅ 季檢紀錄與簽名已成功送出！");
-          liff.closeWindow();
+          liff.closeWindow(); // 成功後直接關閉，不需解鎖
         } else {
           alert("❌ 儲存失敗：" + result.status);
-          btn.disabled = false;
+          btn.disabled = false; // 失敗時恢復按鈕
           btn.innerText = "確認送出季檢表";
         }
       })
       .catch(err => {
         alert("❌ 送出失敗: " + err.message);
-        btn.disabled = false;
+        btn.disabled = false; // 失敗時恢復按鈕
         btn.innerText = "確認送出季檢表";
       });
     }
-  </script>
-</body>
-</html>
   </script>
 </body>
 </html>
