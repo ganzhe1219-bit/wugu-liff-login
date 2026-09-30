@@ -28,11 +28,12 @@
     .check-btn.active.abnormal { background: #e74c3c; color: white; border-color: #c0392b; }
     .check-btn.active.na { background: #95a5a6; color: white; border-color: #7f8c8d; }
     
-    .btn-submit { display: block; width: 100%; padding: 20px; background: #3498db; color: white; border: none; border-radius: 10px; font-size: 26px; font-weight: 900; margin-top: 30px; }
+    .btn-submit { display: block; width: 100%; padding: 20px; background: #3498db; color: white; border: none; border-radius: 10px; font-size: 26px; font-weight: 900; margin-top: 30px; transition: 0.3s; }
+    .btn-submit:disabled { background: #95a5a6; cursor: not-allowed; }
     #loading, #registerBox { text-align: center; padding: 30px 10px; font-size: 24px; font-weight: bold; }
     .hidden { display: none; }
 
-    /* 👇 新增：簽名板專屬設定 */
+    /* 簽名板專屬設定 */
     #signatureCanvas { border: 3px dashed #3498db; border-radius: 8px; background: #fafafa; width: 100%; height: 250px; cursor: crosshair; touch-action: none; margin-top: 5px; }
     .btn-clear { display: inline-block; padding: 10px 20px; background: #95a5a6; color: white; border: none; border-radius: 8px; font-size: 18px; font-weight: bold; margin-top: 10px; width: 100%; }
   </style>
@@ -74,12 +75,13 @@
         <div id="dynamicQuestions"></div>
       </div>
 
-      <div class="form-group hidden" id="memoGroup" style="margin-top:20px;">
-        <label style="color: #e74c3c;">⚠️ 發現異常！請說明故障狀況：</label>
-        <textarea id="note" rows="3" placeholder="請描述異常情況..."></textarea>
+      <!-- 👇 修改：永遠顯示的選填措施欄位 -->
+      <div class="form-group" id="memoGroup" style="margin-top:20px;">
+        <label style="font-size: 24px; color: #2c3e50;">檢查結果採取或建議之改善措施：</label>
+        <textarea id="note" rows="2" placeholder="無則免填"></textarea>
       </div>
 
-      <!-- 👇 新增：簽名板區塊 -->
+      <!-- 簽名板區塊 -->
       <div class="form-group hidden" id="signatureGroup" style="margin-top:30px;">
         <label style="font-size: 24px;">✍️ 駕駛親筆簽名 (必填)：</label>
         <canvas id="signatureCanvas"></canvas>
@@ -95,8 +97,10 @@
     const LIFF_ID = "2011658008-7vfc1d6q"; 
     
     const db = {
-      "一般車輛": { cars: ["025-BX","026-BX","029-BY","042-R5","067-TH","095-VK","120-VK","128-BY","1457-L2","193-BX","195-BX","201-BX","225-UY","247-BX","272-BY","286-BY","295-R6","363-BY","4021-T2","4022-T2","4723-K9","412-VK","422-UM","4427-YM","4428-YM","4433-YM","447-R5","4721-K9","477-BX","5502-G3","620-UY","6390-VL","649-SL","650-SL","653-BX","655-BX","677-BX","678-BX","7435-A5","7436-A5","7492-YL","822-TW","8F-9247","9080-RH","9081-RH","912-R7","AAC-298","AAC-791","AKT-2278","ALA-1091","ALA-6913","APG-9263","APK-9072","AXC-1712","AXC-1715","BBN-0971","BBN-0972","BEN-7251","BTB-2892","BTB-2893","BZY-8173","KEC-0719","KEC-0723","KED-0815","KEE-1110","KEG-2050","KEG-2815","KEG-2911","KEJ-3529","KEJ-3697","KEJ-6282","KEL-3996","KEP-7116","KEQ-0239","KEQ-0250","KEQ-0251","KEQ-0252","KEU-3230","KEU-5026","KEU-5231","KEU-5237","KEU-5567","KEU-5569","KEU-5573","KEU-6101","KEV-8665","KEX-0129"], questions: ["引擎機油(1-10等分)","儀表操作、指示燈","方向盤","喇叭、車窗試放","監視主機","遠近光燈、煞車燈","前後方向燈","手煞車、腳煞車","後視鏡","雨刷","胎壓、胎紋","輪胎紋路","引擎機油、方向機油、煞車油","油量","電瓶水","水箱冷卻水","擋風玻璃清潔液","★警示旋轉燈、蜂鳴器","★安全護欄","★垃圾壓縮系統","★附設加壓系統"] },
-      "抓斗車": { cars: ["KEG-2815","649-SL","912-R7"], questions: ["油壓系統油箱油量正常","油管聯結器等有無漏油","控制裝置運作正常","PTO操作正常","旋轉裝置螺栓鬆動是否漏油","作業器具安全帽安全帶正常","制動器離合器儀表燈光正常","吊具鋼索有無截斷磨損","★過捲及過負荷預防裝置正常","★防滑舌片裝置正常","未超過額定荷重","警報控制開關器正常"] },
+      // 👇 修改：引擎機油選項文字
+      "一般車輛": { cars: ["025-BX","026-BX","029-BY","042-R5","067-TH","095-VK","120-VK","128-BY","1457-L2","193-BX","195-BX","201-BX","225-UY","247-BX","272-BY","286-BY","295-R6","363-BY","4021-T2","4022-T2","4723-K9","412-VK","422-UM","4427-YM","4428-YM","4433-YM","447-R5","4721-K9","477-BX","5502-G3","620-UY","6390-VL","649-SL","650-SL","653-BX","655-BX","677-BX","678-BX","7435-A5","7436-A5","7492-YL","822-TW","8F-9247","9080-RH","9081-RH","912-R7","AAC-298","AAC-791","AKT-2278","ALA-1091","ALA-6913","APG-9263","APK-9072","AXC-1712","AXC-1715","BBN-0971","BBN-0972","BEN-7251","BTB-2892","BTB-2893","BZY-8173","KEC-0719","KEC-0723","KED-0815","KEE-1110","KEG-2050","KEG-2815","KEG-2911","KEJ-3529","KEJ-3697","KEJ-6282","KEL-3996","KEP-7116","KEQ-0239","KEQ-0250","KEQ-0251","KEQ-0252","KEU-3230","KEU-5026","KEU-5231","KEU-5237","KEU-5567","KEU-5569","KEU-5573","KEU-6101","KEV-8665","KEX-0129"], questions: ["引擎機油(高/中/低)","儀表操作、指示燈","方向盤","喇叭、車窗試放","監視主機","遠近光燈、煞車燈","前後方向燈","手煞車、腳煞車","後視鏡","雨刷","胎壓、胎紋","輪胎紋路","引擎機油、方向機油、煞車油","油量","電瓶水","水箱冷卻水","擋風玻璃清潔液","★警示旋轉燈、蜂鳴器","★安全護欄","★垃圾壓縮系統","★附設加壓系統"] },
+      // 👇 修改：抓斗車第5題文字
+      "抓斗車": { cars: ["KEG-2815","649-SL","912-R7"], questions: ["油壓系統油箱油量正常","油管聯結器等有無漏油","控制裝置運作正常","PTO操作正常","旋轉裝置螺栓是否鬆動、漏油","作業器具安全帽安全帶正常","制動器離合器儀表燈光正常","吊具鋼索有無截斷磨損","★過捲及過負荷預防裝置正常","★防滑舌片裝置正常","未超過額定荷重","警報控制開關器正常"] },
       "堆高機": { cars: ["53","61"], questions: ["靜態試拉手煞車","腳煞車系統動態煞車踏板間隙","檢查液壓管路","試踩離合器","車靜止時試搖排檔桿","連結裝置檢查有無異常","各種儀器檢查有無異常","蓄電池檢查有無異常","配線檢查有無異常","控制裝置檢查有無異常"] },
       "高空作業車": { cars: ["AAC-791"], questions: ["靜態試拉手煞車","檢查腳煞車系統動態","無顯著磨損、剝離、油污","離合器檢查液壓管路","試踩離合器","車靜止時試搖排檔桿","開關或控制器作動狀況正常","各種作業裝備應正常","油箱油量是否正常","配線檢查有無異常"] },
       "車輛系營建機械": { cars: ["55","56","60","62","挖719"], questions: ["引擎室機油、冷卻水、燃油是否洩漏","冷卻系統是否洩漏及散熱片積泥","末級傳動是否洩漏","鏈輪齒是否磨損","各燈系是否正常","各操作油管及接頭是否正常","煞車制動是否正常","駕駛室清潔與儀錶破損","空氣濾清器運作是否正常","★輪胎氣壓是否充足","風扇皮帶龜裂鬆弛","電瓶液面是否於正常","黃油檢注射斗主梢"] }
@@ -105,7 +109,7 @@
     let currentUserId = "";
     let currentAnswers = [];
 
-    // 👇 新增：簽名板專用變數
+    // 簽名板專用變數
     let canvas, ctx, isDrawing = false, hasSigned = false;
 
     window.onload = function() {
@@ -173,7 +177,6 @@
       vSelect.innerHTML = '<option value="">-- 請選擇 --</option>';
       qArea.innerHTML = '';
       currentAnswers = [];
-      document.getElementById('memoGroup').classList.add('hidden');
       document.getElementById('signatureGroup').classList.add('hidden');
       document.getElementById('note').value = '';
 
@@ -197,11 +200,14 @@
         currentAnswers.push(ans); 
         
         html += `<div class="form-group"><label>${idx + 1}. ${q}</label>`;
-        if(q.includes("1-10等分")) {
+        // 👇 修改：判斷若為機油題，則顯示高中低下拉選單
+        if(q.includes("引擎機油(高/中/低)")) {
           html += `<select id="sel-q${idx}" onchange="updateAns(${idx}, this.value)">
-                     <option value="">請選擇</option>`;
-          for(let i=1; i<=10; i++) html += `<option value="${i}">${i}</option>`;
-          html += `</select>`;
+                     <option value="">請選擇</option>
+                     <option value="高(80%以上)">高(80%以上)</option>
+                     <option value="中(50~80%)">中(50~80%)</option>
+                     <option value="低(50%以下)">低(50%以下)</option>
+                   </select>`;
         } else {
           // 判斷上次是選哪個，就幫該按鈕加上顏色 (active)
           let normAct = (ans === '正常') ? 'active normal' : '';
@@ -221,17 +227,12 @@
 
       // 補上下拉選單的預設值
       db[type].questions.forEach((q, idx) => {
-        if(q.includes("1-10等分") && savedAnswers[idx]) {
+        if(q.includes("引擎機油(高/中/低)") && savedAnswers[idx]) {
           document.getElementById(`sel-q${idx}`).value = savedAnswers[idx];
         }
       });
 
-      // 如果載入的答案裡面有異常，就把備註欄位打開
-      if (currentAnswers.includes('異常')) {
-        document.getElementById('memoGroup').classList.remove('hidden');
-      }
-
-      // 👇 新增：開啟簽名板區塊，並延遲 100 毫秒初始化畫布大小，確保排版不會跑掉
+      // 開啟簽名板區塊，並延遲 100 毫秒初始化畫布大小，確保排版不會跑掉
       document.getElementById('signatureGroup').classList.remove('hidden');
       setTimeout(initCanvas, 100);
     }
@@ -246,11 +247,9 @@
 
     function updateAns(idx, val) {
       currentAnswers[idx] = val;
-      const hasAbnormal = currentAnswers.includes('異常');
-      document.getElementById('memoGroup').classList.toggle('hidden', !hasAbnormal);
     }
 
-    // 👇 新增：簽名板相關的邏輯運算
+    // 簽名板相關的邏輯運算
     function initCanvas() {
       const rect = canvas.getBoundingClientRect();
       canvas.width = rect.width;
@@ -298,21 +297,22 @@
       const vNo = document.getElementById('vehicleNo').value;
       if (!vNo) return alert('請選擇車號！');
       if (currentAnswers.includes("")) return alert("請確認所有檢查項目皆已點選或填寫！");
-      const hasAbnormal = currentAnswers.includes('異常');
       const note = document.getElementById('note').value.trim();
-      if (hasAbnormal && !note) return alert("有異常項目，請填寫備註說明！");
       
-      // 👇 檢查是否已經簽名
+      // 檢查是否已經簽名
       if (!hasSigned) return alert("📝 請在最下方框框內親筆簽名！");
 
       const btn = document.getElementById('submitBtn');
-      btn.disabled = true; btn.innerText = '資料上傳中...(含圖片)';
+      
+      // 防呆機制：鎖死按鈕並改變文字，防止同仁連續點擊
+      btn.disabled = true; 
+      btn.innerText = '⏳ 資料上傳中，請稍候...';
 
       const payload = {
         userId: currentUserId, driverName: document.getElementById('driverName').value,
         vehicleType: document.getElementById('vehicleType').value, vehicleNo: vNo,
         answers: currentAnswers, note: note,
-        signature: canvas.toDataURL('image/png') // 👇 將簽名轉為圖片代碼一起傳送
+        signature: canvas.toDataURL('image/png') // 將簽名轉為圖片代碼一起傳送
       };
 
       fetch(APPS_SCRIPT_URL, {
@@ -326,10 +326,12 @@
         }));
 
         alert("✅ 檢查表已成功送出！\n您的簽名與車輛狀況已存檔。");
-        liff.closeWindow();
+        liff.closeWindow(); // 成功關閉網頁，不需解鎖按鈕
       }).catch(err => {
         alert("❌ 送出失敗，請檢查網路連線");
-        btn.disabled = false; btn.innerText = '確認送出';
+        // 防呆機制：萬一傳送失敗，必須將按鈕解鎖恢復，讓同仁可以重試
+        btn.disabled = false; 
+        btn.innerText = '確認送出';
       });
     }
   </script>
