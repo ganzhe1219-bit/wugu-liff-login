@@ -25,7 +25,7 @@
     .check-btn:nth-child(2) { flex: 1; padding: 16px 5px; font-size: 20px; }
     .check-btn:nth-child(3) { flex: 1.2; padding: 16px 2px; font-size: 18px; }
 
-    /* 👇 機油專屬的三等分按鈕比例與字體調整，避免手機螢幕太小擠不下 */
+    /* 機油專屬的三等分按鈕比例與字體調整 */
     .oil-group .check-btn { flex: 1 !important; font-size: 15px !important; padding: 16px 2px !important; letter-spacing: normal !important; }
 
     /* 按鈕選中狀態 */
@@ -68,7 +68,8 @@
           <option value="抓斗車">抓斗車</option>
           <option value="堆高機">堆高機</option>
           <option value="高空作業車">高空作業車</option>
-          <option value="車輛系營建機械">車輛系營建機械</option>
+          <!-- 👇 修改：合併為單一選項 -->
+          <option value="鏟裝機、挖掘機">鏟裝機、挖掘機</option>
         </select>
       </div>
       <div class="form-group">
@@ -102,18 +103,17 @@
     const LIFF_ID = "2011658008-7vfc1d6q"; 
     
     const db = {
-      // 👇 一般車輛第一題已經簡化為 "引擎機油"
       "一般車輛": { cars: ["025-BX","026-BX","029-BY","042-R5","067-TH","095-VK","120-VK","128-BY","1457-L2","193-BX","195-BX","201-BX","225-UY","247-BX","272-BY","286-BY","295-R6","363-BY","4021-T2","4022-T2","4723-K9","412-VK","422-UM","4427-YM","4428-YM","4433-YM","447-R5","4721-K9","477-BX","5502-G3","620-UY","6390-VL","649-SL","650-SL","653-BX","655-BX","677-BX","678-BX","7435-A5","7436-A5","7492-YL","822-TW","8F-9247","9080-RH","9081-RH","912-R7","AAC-298","AAC-791","AKT-2278","ALA-1091","ALA-6913","APG-9263","APK-9072","AXC-1712","AXC-1715","BBN-0971","BBN-0972","BEN-7251","BTB-2892","BTB-2893","BZY-8173","KEC-0719","KEC-0723","KED-0815","KEE-1110","KEG-2050","KEG-2815","KEG-2911","KEJ-3529","KEJ-3697","KEJ-6282","KEL-3996","KEP-7116","KEQ-0239","KEQ-0250","KEQ-0251","KEQ-0252","KEU-3230","KEU-5026","KEU-5231","KEU-5237","KEU-5567","KEU-5569","KEU-5573","KEU-6101","KEV-8665","KEX-0129"], questions: ["引擎機油","儀表操作、指示燈","方向盤","喇叭、車窗試放","監視主機","遠近光燈、煞車燈","前後方向燈","手煞車、腳煞車","後視鏡","雨刷","胎壓、胎紋","輪胎紋路","引擎機油、方向機油、煞車油","油量","電瓶水","水箱冷卻水","擋風玻璃清潔液","★警示旋轉燈、蜂鳴器","★安全護欄","★垃圾壓縮系統","★附設加壓系統"] },
       "抓斗車": { cars: ["KEG-2815","649-SL","912-R7"], questions: ["油壓系統油箱油量正常","油管聯結器等有無漏油","控制裝置運作正常","PTO操作正常","旋轉裝置螺栓是否鬆動、漏油","作業器具安全帽安全帶正常","制提器離合器儀表燈光正常","吊具鋼索有無截斷磨損","★過捲及過負荷預防裝置正常","★防滑舌片裝置正常","未超過額定荷重","警報控制開關器正常"] },
       "堆高機": { cars: ["53","61"], questions: ["靜態試拉手煞車","腳煞車系統動態煞車踏板間隙","檢查液壓管路","試踩離合器","車靜止時試搖排檔桿","連結裝置檢查有無異常","各種儀器檢查有無異常","蓄電池檢查有無異常","配線檢查有無異常","控制裝置檢查有無異常"] },
       "高空作業車": { cars: ["AAC-791"], questions: ["靜態試拉手煞車","檢查腳煞車系統動態","無顯著磨損、剝離、油污","離合器檢查液壓管路","試踩離合器","車靜止時試搖排檔桿","開關或控制器作動狀況正常","各種作業裝備應正常","油箱油量是否正常","配線檢查有無異常"] },
-      "車輛系營建機械": { cars: ["55","56","60","62","挖719"], questions: ["引擎室機油、冷卻水、燃油是否洩漏","冷卻系統是否洩漏及散熱片積泥","末級傳動是否洩漏","鏈輪齒是否磨損","各燈系是否正常","各操作油管及接頭是否正常","煞車制動是否正常","駕駛室清潔與儀錶破損","空氣濾清器運作是否正常","★輪胎氣壓是否充足","風扇皮帶龜裂鬆弛","電瓶液面是否於正常","黃油檢注射斗主梢"] }
+      // 👇 修改：將原本的營建機械更名為「鏟裝機、挖掘機」，並包含所有機具
+      "鏟裝機、挖掘機": { cars: ["55","56","60","62","挖719"], questions: ["引擎室機油、冷卻水、燃油是否洩漏","冷卻系統是否洩漏及散熱片積泥","末級傳動是否洩漏","鏈輪齒是否磨損","各燈系是否正常","各操作油管及接頭是否正常","煞車制動是否正常","駕駛室清潔與儀錶破損","空氣濾清器運作是否正常","★輪胎氣壓是否充足","風扇皮帶龜裂鬆弛","電瓶液面是否於正常","黃油檢注射斗主梢"] }
     };
 
     let currentUserId = "";
     let currentAnswers = [];
 
-    // 簽名板專用變數
     let canvas, ctx, isDrawing = false, hasSigned = false;
 
     window.onload = function() {
@@ -185,26 +185,22 @@
 
       if (!type) { qWrap.classList.add('hidden'); return; }
 
-      // 讀取這台手機上次存下來的該車種紀錄
       const savedData = JSON.parse(localStorage.getItem('savedCheck_' + type)) || {};
       const savedAnswers = savedData.answers || [];
       const savedVehicleNo = savedData.vehicleNo || "";
 
-      // 載入車號，並自動選取上次開的那台車
       db[type].cars.forEach(car => {
         let selected = (car === savedVehicleNo) ? 'selected' : '';
         vSelect.innerHTML += `<option value="${car}" ${selected}>${car}</option>`;
       });
       
-      // 載入題目，並自動套用上次的答案
       let html = '';
       db[type].questions.forEach((q, idx) => {
-        let ans = savedAnswers[idx] || ""; // 抓取上次的答案
+        let ans = savedAnswers[idx] || ""; 
         currentAnswers.push(ans); 
         
         html += `<div class="form-group"><label>${idx + 1}. ${q}</label>`;
         
-        // 👇 精準比對「引擎機油」這一題，套用三顆專屬按鈕
         if(q === "引擎機油") {
           let highAct = (ans === '高於80%') ? 'active normal' : '';
           let midAct = (ans === '50~80%') ? 'active abnormal' : '';
@@ -216,7 +212,6 @@
                      <div class="check-btn btn-q${idx} ${lowAct}" onclick="setOilAns(${idx}, '50%以下', this)">50%以下</div>
                    </div>`;
         } else {
-          // 一般題目的正常/異常/無此項
           let normAct = (ans === '正常') ? 'active normal' : '';
           let abnAct = (ans === '異常') ? 'active abnormal' : '';
           let naAct = (ans === '無此項') ? 'active na' : '';
@@ -233,22 +228,18 @@
       qArea.innerHTML = html;
       qWrap.classList.remove('hidden');
 
-      // 開啟簽名板區塊，並延遲 100 毫秒初始化畫布大小，確保排版不會跑掉
       document.getElementById('signatureGroup').classList.remove('hidden');
       setTimeout(initCanvas, 100);
     }
 
-    // 👇 專門處理「機油題」三個按鈕點擊與顏色的函數
     function setOilAns(idx, val, element) {
       updateAns(idx, val);
       document.querySelectorAll('.btn-q' + idx).forEach(btn => btn.classList.remove('active', 'normal', 'abnormal', 'na'));
       
-      // 高顯示綠色 (normal)，中跟低顯示紅色 (abnormal)
       if(val === '高於80%') element.classList.add('active', 'normal');
       if(val === '50~80%' || val === '50%以下') element.classList.add('active', 'abnormal');
     }
 
-    // 原本的一般按鈕處理邏輯
     function setAns(idx, val, element) {
       updateAns(idx, val);
       document.querySelectorAll('.btn-q' + idx).forEach(btn => btn.classList.remove('active', 'normal', 'abnormal', 'na'));
@@ -261,7 +252,6 @@
       currentAnswers[idx] = val;
     }
 
-    // 簽名板相關的邏輯運算
     function initCanvas() {
       const rect = canvas.getBoundingClientRect();
       canvas.width = rect.width;
@@ -303,7 +293,6 @@
 
     function stopDraw() { isDrawing = false; ctx.closePath(); }
 
-    // --- 送出表單 ---
     function submitForm(event) {
       event.preventDefault();
       const vNo = document.getElementById('vehicleNo').value;
@@ -311,12 +300,10 @@
       if (currentAnswers.includes("")) return alert("請確認所有檢查項目皆已點選或填寫！");
       const note = document.getElementById('note').value.trim();
       
-      // 檢查是否已經簽名
       if (!hasSigned) return alert("📝 請在最下方框框內親筆簽名！");
 
       const btn = document.getElementById('submitBtn');
       
-      // 防呆機制：鎖死按鈕並改變文字，防止同仁連續點擊
       btn.disabled = true; 
       btn.innerText = '⏳ 資料上傳中，請稍候...';
 
@@ -324,24 +311,22 @@
         userId: currentUserId, driverName: document.getElementById('driverName').value,
         vehicleType: document.getElementById('vehicleType').value, vehicleNo: vNo,
         answers: currentAnswers, note: note,
-        signature: canvas.toDataURL('image/png') // 將簽名轉為圖片代碼一起傳送
+        signature: canvas.toDataURL('image/png') 
       };
 
       fetch(APPS_SCRIPT_URL, {
         method: 'POST',
         body: JSON.stringify({ action: "saveData", data: payload })
       }).then(() => {
-        // 🎉 送出成功後，把這次選的車號跟答案存進手機記憶體
         localStorage.setItem('savedCheck_' + payload.vehicleType, JSON.stringify({
            vehicleNo: payload.vehicleNo,
            answers: payload.answers
         }));
 
         alert("✅ 檢查表已成功送出！\n您的簽名與車輛狀況已存檔。");
-        liff.closeWindow(); // 成功關閉網頁，不需解鎖按鈕
+        liff.closeWindow(); 
       }).catch(err => {
         alert("❌ 送出失敗，請檢查網路連線");
-        // 防呆機制：萬一傳送失敗，必須將按鈕解鎖恢復，讓同仁可以重試
         btn.disabled = false; 
         btn.innerText = '確認送出';
       });
