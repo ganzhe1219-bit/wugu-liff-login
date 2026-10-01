@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>每日車輛作業前自動檢查表</title>
   <script charset="utf-8" src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
-  <!-- 👇 新增：引入 SweetAlert2 彈出視窗套件 -->
+  <!-- 引入 SweetAlert2 彈出視窗套件 -->
   <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
   <style>
     body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; padding: 10px; background: #f4f4f9; color: #111; margin: 0; }
@@ -44,7 +44,7 @@
     #signatureCanvas { border: 3px dashed #3498db; border-radius: 8px; background: #fafafa; width: 100%; height: 250px; cursor: crosshair; touch-action: none; margin-top: 5px; }
     .btn-clear { display: inline-block; padding: 10px 20px; background: #95a5a6; color: white; border: none; border-radius: 8px; font-size: 18px; font-weight: bold; margin-top: 10px; width: 100%; }
 
-    /* 👇 新增：放大 SweetAlert2 視窗內的字體 */
+    /* 放大 SweetAlert2 視窗內的字體 */
     .swal2-title { font-size: 28px !important; }
     .swal2-html-container { font-size: 20px !important; }
     .swal2-confirm { font-size: 20px !important; padding: 12px 24px !important; }
@@ -150,6 +150,7 @@
     function checkUserStatus() {
       fetch(APPS_SCRIPT_URL, {
         method: 'POST',
+        headers: { 'Content-Type': 'text/plain;charset=utf-8' }, // 確保跨網域成功
         body: JSON.stringify({ action: "checkUser", userId: currentUserId })
       }).then(res => res.json()).then(data => {
         document.getElementById('loading').classList.add('hidden');
@@ -177,8 +178,9 @@
       
       fetch(APPS_SCRIPT_URL, {
         method: 'POST',
+        headers: { 'Content-Type': 'text/plain;charset=utf-8' }, // 確保跨網域成功
         body: JSON.stringify({ action: "register", userId: currentUserId, name: nameInput })
-      }).then(() => {
+      }).then(res => res.json()).then(data => {
         Swal.fire({
           icon: 'success',
           title: '✅ 綁定成功',
@@ -228,8 +230,9 @@
         html += `<div class="form-group"><label>${idx + 1}. ${q}</label>`;
         
         if(q === "引擎機油") {
+          // 👇 將 50~80% 也改為綠色 (active normal)
           let highAct = (ans === '高於80%') ? 'active normal' : '';
-          let midAct = (ans === '50~80%') ? 'active abnormal' : '';
+          let midAct = (ans === '50~80%') ? 'active normal' : ''; 
           let lowAct = (ans === '50%以下') ? 'active abnormal' : '';
 
           html += `<div class="btn-group oil-group">
@@ -262,8 +265,9 @@
       updateAns(idx, val);
       document.querySelectorAll('.btn-q' + idx).forEach(btn => btn.classList.remove('active', 'normal', 'abnormal', 'na'));
       
-      if(val === '高於80%') element.classList.add('active', 'normal');
-      if(val === '50~80%' || val === '50%以下') element.classList.add('active', 'abnormal');
+      // 👇 高於80% 與 50~80% 都會顯示綠色
+      if(val === '高於80%' || val === '50~80%') element.classList.add('active', 'normal');
+      if(val === '50%以下') element.classList.add('active', 'abnormal');
     }
 
     function setAns(idx, val, element) {
@@ -351,14 +355,14 @@
 
       fetch(APPS_SCRIPT_URL, {
         method: 'POST',
+        headers: { 'Content-Type': 'text/plain;charset=utf-8' }, // 確保跨網域成功
         body: JSON.stringify({ action: "saveData", data: payload })
-      }).then(() => {
+      }).then(res => res.json()).then(data => {
         localStorage.setItem('savedCheck_' + payload.vehicleType, JSON.stringify({
            vehicleNo: payload.vehicleNo,
            answers: payload.answers
         }));
 
-        // 👇 核心修改：送出成功後的超級大視窗
         Swal.fire({
           icon: 'success',
           title: '✅ 紀錄已送出！',
