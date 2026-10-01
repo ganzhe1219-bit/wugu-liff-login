@@ -1,7 +1,11 @@
 <!DOCTYPE html>
 <html>
 <head>
+  <!-- 加入 LINE LIFF -->
   <script charset="utf-8" src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
+  <!-- 👇 新增：加入 SweetAlert2 彈出視窗套件 -->
+  <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+  
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>每日酒測登記</title>
@@ -11,25 +15,26 @@
     h2 { color: #2c3e50; margin-bottom: 5px; }
     #driverName { font-size: 24px; font-weight: bold; color: #2980b9; margin-bottom: 20px; }
     
-    /* 調整按鈕群組往下移 */
     #buttonGroup { margin-top: 40px; }
     
-    /* 調整按鈕間距與點擊範圍 */
     .btn-pass { display: block; width: 100%; padding: 25px 20px; background: #27ae60; color: white; border: none; border-radius: 8px; font-size: 24px; font-weight: bold; cursor: pointer; margin-bottom: 35px; transition: 0.3s; }
     .btn-fail { display: block; width: 100%; padding: 18px; background: #e74c3c; color: white; border: none; border-radius: 8px; font-size: 20px; font-weight: bold; cursor: pointer; margin-bottom: 15px; transition: 0.3s;}
     .btn-cancel { display: block; width: 100%; padding: 15px; background: #7f8c8d; color: white; border: none; border-radius: 8px; font-size: 18px; font-weight: bold; cursor: pointer; transition: 0.3s; }
     
-    /* 按鈕鎖死時的防呆灰色樣式 */
     .btn-pass:disabled, .btn-fail:disabled, .btn-submit:disabled { background: #95a5a6 !important; cursor: not-allowed; }
     
     .input-box { width: 100%; padding: 12px; margin-bottom: 20px; border: 2px solid #e74c3c; border-radius: 8px; font-size: 18px; box-sizing: border-box; text-align: center; }
     
-    /* 註冊畫面專用按鈕與輸入框 */
     .reg-input { width: 100%; padding: 12px; margin-bottom: 20px; border: 2px solid #3498db; border-radius: 8px; font-size: 18px; box-sizing: border-box; text-align: center; }
     .btn-submit { display: block; width: 100%; padding: 15px; background: #3498db; color: white; border: none; border-radius: 8px; font-size: 18px; font-weight: bold; cursor: pointer; transition: 0.3s; }
 
     #loading { color: #666; margin-bottom: 20px; }
     .hidden { display: none !important; }
+
+    /* 👇 新增：放大 SweetAlert2 視窗內的字體，讓長輩更容易看清楚 */
+    .swal2-title { font-size: 28px !important; }
+    .swal2-html-container { font-size: 20px !important; }
+    .swal2-confirm { font-size: 20px !important; padding: 12px 24px !important; }
   </style>
 </head>
 <body>
@@ -64,6 +69,7 @@
   </div>
 
   <script>
+    // 保持你原本獨立的酒測後台網址
     const APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbw2VQW2KJiSTz-eMA7NeKDh-9n8l5QXzuHy_ul5w9AJwW3oCEmxqhYXvVYC_znHVQeXaw/exec"; 
     const LIFF_ID = "2011658008-PlEdlKp7"; 
     
@@ -102,13 +108,17 @@
         }
       })
       .catch(err => {
-        alert("連線後台失敗，請重整頁面");
+        // 👇 錯誤提示也改用大視窗
+        Swal.fire({ icon: 'error', title: '連線異常', text: '無法連接資料庫，請重新整理頁面', confirmButtonText: '我知道了' });
       });
     }
 
     function submitRegister() {
       const nameInput = document.getElementById('regNameInput').value.trim();
-      if (!nameInput) return alert("請輸入真實姓名！");
+      if (!nameInput) {
+        Swal.fire({ icon: 'warning', title: '請輸入姓名', text: '必須填寫真實姓名才能開始使用！', confirmButtonText: '確定' });
+        return;
+      }
       
       const btn = document.getElementById('btnRegister');
       btn.disabled = true;
@@ -120,13 +130,21 @@
       })
       .then(res => res.json())
       .then(data => {
-        alert("✅ 綁定成功！");
-        currentRealName = nameInput;
-        document.getElementById('registerUI').classList.add('hidden');
-        showMainUI();
+        // 👇 綁定成功大視窗
+        Swal.fire({
+          icon: 'success',
+          title: '✅ 綁定成功',
+          text: `歡迎使用，${nameInput}！`,
+          confirmButtonColor: '#3498db',
+          confirmButtonText: '開始酒測'
+        }).then(() => {
+          currentRealName = nameInput;
+          document.getElementById('registerUI').classList.add('hidden');
+          showMainUI();
+        });
       })
       .catch(err => {
-        alert("❌ 綁定失敗，請檢查網路");
+        Swal.fire({ icon: 'error', title: '綁定失敗', text: '請檢查網路後再試一次', confirmButtonText: '確定' });
         btn.disabled = false;
         btn.innerText = "✅ 確認綁定";
       });
@@ -156,7 +174,10 @@
 
     function submitAbnormal() {
       const numValue = document.getElementById('abnormalValue').value;
-      if (!numValue) return alert("請輸入酒測數值！");
+      if (!numValue) {
+        Swal.fire({ icon: 'warning', title: '請輸入數值', text: '請確實填寫酒測儀器上的數字！', confirmButtonText: '確定' });
+        return;
+      }
       
       const btn = document.getElementById('btnSubmitAbnormal');
       btn.innerText = '⏳ 資料送出中，請稍後...';
@@ -182,12 +203,22 @@
       })
       .then(res => res.json())
       .then(data => {
-        alert('✅ 酒測紀錄已送出！');
-        liff.closeWindow(); 
+        // 👇 核心修改：送出成功後的超級大視窗
+        Swal.fire({
+          icon: 'success',
+          title: '✅ 紀錄已送出！',
+          text: '您的酒測紀錄已安全存檔',
+          confirmButtonColor: '#27ae60', // 綠色按鈕
+          confirmButtonText: '關閉視窗',
+          allowOutsideClick: false // 強制使用者點擊按鈕才能關閉
+        }).then((result) => {
+          if (result.isConfirmed) {
+            liff.closeWindow(); // 點擊關閉視窗後自動離開 LINE LIFF
+          }
+        });
       })
       .catch(error => {
-        alert('❌ 傳送失敗，請檢查網路');
-        // 恢復按鈕狀態讓同仁可以重試
+        Swal.fire({ icon: 'error', title: '❌ 傳送失敗', text: '請檢查網路連線是否正常', confirmButtonText: '確定' });
         buttons.forEach(btn => btn.disabled = false);
         document.getElementById('btnPass').innerText = '🟢 酒測值為 0';
         document.getElementById('btnSubmitAbnormal').innerText = '⚠️ 確認送出異常紀錄';
