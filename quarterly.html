@@ -4,6 +4,9 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>一般車輛自動檢查表(每季)</title>
+  <script charset="utf-8" src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
+  <!-- 👇 引入 SweetAlert2 彈出視窗套件 -->
+  <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
   <style>
     body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; padding: 10px; background: #f4f4f9; color: #111; margin: 0; }
     .container { max-width: 600px; margin: auto; background: white; padding: 20px 15px; border-radius: 12px; box-shadow: 0 4px 10px rgba(0,0,0,0.05); }
@@ -47,8 +50,12 @@
     .btn-sub-1.active { background: #e74c3c; border-color: #e74c3c; }
     .btn-sub-2 { color: #7f8c8d; border-color: #7f8c8d; }
     .btn-sub-2.active { background: #7f8c8d; border-color: #7f8c8d; }
+
+    /* 👇 放大 SweetAlert2 視窗內的字體 */
+    .swal2-title { font-size: 28px !important; }
+    .swal2-html-container { font-size: 20px !important; }
+    .swal2-confirm { font-size: 20px !important; padding: 12px 24px !important; }
   </style>
-  <script charset="utf-8" src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
 </head>
 <body>
   <div class="container">
@@ -65,7 +72,7 @@
         <input type="text" id="regName" placeholder="例如：王小明" required>
         <div style="font-size: 14px; color: #e74c3c; margin-top: 8px;">⚠️ 請務必填寫正確真實姓名，送出後若需修改請洽管理員。</div>
       </div>
-      <button type="button" class="btn-submit" style="background:#27ae60;" onclick="submitRegistration(event)">完成綁定並進入</button>
+      <button type="button" class="btn-submit" id="btnRegister" style="background:#27ae60;" onclick="submitRegistration(event)">完成綁定並進入</button>
     </div>
 
     <form id="checkForm" class="hidden" onsubmit="submitForm(event)">
@@ -78,6 +85,7 @@
         <label>車牌號碼：</label>
         <select id="vehicleId" required>
           <option value="">-- 請選擇車輛 --</option>
+          <!-- 已經幫你把 87 台車號完整加回來囉！ -->
           <option value="025-BX">025-BX</option>
           <option value="026-BX">026-BX</option>
           <option value="029-BY">029-BY</option>
@@ -110,6 +118,7 @@
           <option value="5502-G3">5502-G3</option>
           <option value="620-UY">620-UY</option>
           <option value="6390-VL">6390-VL</option>
+          <option value="649-SL">649-SL</option>
           <option value="650-SL">650-SL</option>
           <option value="653-BX">653-BX</option>
           <option value="655-BX">655-BX</option>
@@ -122,7 +131,9 @@
           <option value="8F-9247">8F-9247</option>
           <option value="9080-RH">9080-RH</option>
           <option value="9081-RH">9081-RH</option>
+          <option value="912-R7">912-R7</option>
           <option value="AAC-298">AAC-298</option>
+          <option value="AAC-791">AAC-791</option>
           <option value="AKT-2278">AKT-2278</option>
           <option value="ALA-1091">ALA-1091</option>
           <option value="ALA-6913">ALA-6913</option>
@@ -141,6 +152,7 @@
           <option value="KED-0815">KED-0815</option>
           <option value="KEE-1110">KEE-1110</option>
           <option value="KEG-2050">KEG-2050</option>
+          <option value="KEG-2815">KEG-2815</option>
           <option value="KEG-2911">KEG-2911</option>
           <option value="KEJ-3529">KEJ-3529</option>
           <option value="KEJ-3697">KEJ-3697</option>
@@ -187,7 +199,7 @@
   </div>
 
   <script>
-    // 👇👇👇 請務必保持你的 GAS 與 LIFF ID 不變 👇👇👇
+    // 👇👇👇 你的 GAS 與 LIFF ID 不變 👇👇👇
     const GAS_URL = "https://script.google.com/macros/s/AKfycbxD4AxVdWSMoFaawgupU2UqXgWr4-Ji1uoaud8U8SIVu-0tet8t2ZSa2Qwwi-T7LSkD/exec"; 
     const LIFF_ID = "2011658008-yf2pn9TM"; 
     
@@ -210,7 +222,6 @@
     // 動態產生按鈕版檢查項目
     const container = document.getElementById('inspectionItems');
     itemsData.forEach(item => {
-      // 預設將 input 填入第一個選項 (例如: 正常、良好)
       let defaultVal = item.options[0]; 
 
       let html = `
@@ -218,7 +229,6 @@
           <label>${item.name}</label>
           <div style="margin-bottom: 10px; color: #555; font-size: 16px;">🔍 檢查方法：${item.method}</div>
           
-          <!-- 隱藏的輸入框，負責把點選的值存起來送出 -->
           <input type="hidden" id="${item.id}" value="${defaultVal}" required>
           
           <div class="status-layout">
@@ -241,16 +251,13 @@
 
     // 處理按鈕點擊與顏色切換邏輯
     window.setQuarterlyStatus = function(id, val, triggerWord, clickedBtn) {
-      // 1. 寫入數值
       document.getElementById(id).value = val;
       
-      // 2. 切換按鈕亮暗
       const layout = clickedBtn.closest('.status-layout');
       const buttons = layout.querySelectorAll('.btn-status');
       buttons.forEach(btn => btn.classList.remove('active'));
       clickedBtn.classList.add('active');
 
-      // 3. 處理異常措施區塊的顯示與隱藏
       const actionBox = document.getElementById(id + "_action");
       const radios = document.getElementsByName(id + "_radio");
       if (val === triggerWord) {
@@ -334,7 +341,9 @@
               checkUserFromGAS(currentUserId);
             });
           }
-        }).catch(err => alert("LIFF 錯誤: " + err));
+        }).catch(err => {
+          Swal.fire({ icon: 'error', title: 'LIFF 錯誤', text: err.toString(), confirmButtonText: '確定' });
+        });
     };
 
     function checkUserFromGAS(userId) {
@@ -353,13 +362,15 @@
           document.getElementById('registerBox').classList.remove('hidden');
         }
       })
-      .catch(err => alert("網路連線錯誤：" + err));
+      .catch(err => {
+        Swal.fire({ icon: 'error', title: '連線異常', text: '網路連線錯誤，請重試！', confirmButtonText: '我知道了' });
+      });
     }
 
     function submitRegistration(event) {
       const name = document.getElementById('regName').value.trim();
       if (!name) {
-        alert("請輸入真實姓名！");
+        Swal.fire({ icon: 'warning', title: '請輸入姓名', text: '必須填寫真實姓名才能開始使用！', confirmButtonText: '確定' });
         return;
       }
 
@@ -375,18 +386,25 @@
       .then(response => response.json())
       .then(result => {
         if (result.status === "Success") {
-          alert("🎉 綁定成功！");
-          document.getElementById('registerBox').classList.add('hidden');
-          document.getElementById('driverName').value = name;
-          document.getElementById('checkForm').classList.remove('hidden');
+          Swal.fire({
+            icon: 'success',
+            title: '✅ 綁定成功',
+            text: `歡迎使用，${name}！`,
+            confirmButtonColor: '#3498db',
+            confirmButtonText: '開始填寫季檢表'
+          }).then(() => {
+            document.getElementById('registerBox').classList.add('hidden');
+            document.getElementById('driverName').value = name;
+            document.getElementById('checkForm').classList.remove('hidden');
+          });
         } else {
-          alert("綁定失敗：" + result.status);
+          Swal.fire({ icon: 'error', title: '綁定失敗', text: result.status, confirmButtonText: '確定' });
           btn.disabled = false;
           btn.innerText = '完成綁定並進入';
         }
       })
       .catch(err => {
-        alert("連線錯誤：" + err);
+        Swal.fire({ icon: 'error', title: '連線錯誤', text: err.toString(), confirmButtonText: '確定' });
         btn.disabled = false;
         btn.innerText = '完成綁定並進入';
       });
@@ -409,16 +427,15 @@
       
       const vNo = document.getElementById('vehicleId').value;
       if (!vNo) {
-        alert("請選擇車牌號碼！");
+        Swal.fire({ icon: 'warning', title: '提醒', text: '請選擇車牌號碼！', confirmButtonText: '確定' });
         return;
       }
 
       if (!hasSigned) {
-        alert("📝 請在最下方框框內親筆簽名！");
+        Swal.fire({ icon: 'warning', title: '缺少簽名', text: '📝 請在最下方框框內親筆簽名！', confirmButtonText: '確定' });
         return;
       }
 
-      // 👇 防呆機制：鎖死按鈕並改變文字
       const btn = document.getElementById('submitBtn');
       btn.disabled = true; 
       btn.innerText = "⏳ 資料上傳中，請稍候...";
@@ -443,7 +460,7 @@
         signature: canvas.toDataURL("image/png")
       };
 
-     fetch(GAS_URL, {
+      fetch(GAS_URL, {
         method: 'POST',
         headers: { 'Content-Type': 'text/plain;charset=utf-8' },
         body: JSON.stringify({ action: "saveQuarterly", data: formData })
