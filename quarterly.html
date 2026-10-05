@@ -443,7 +443,7 @@
         signature: canvas.toDataURL("image/png")
       };
 
-      fetch(GAS_URL, {
+     fetch(GAS_URL, {
         method: 'POST',
         headers: { 'Content-Type': 'text/plain;charset=utf-8' },
         body: JSON.stringify({ action: "saveQuarterly", data: formData })
@@ -451,16 +451,27 @@
       .then(res => res.json())
       .then(result => {
         if (result.status === "Success") {
-          alert("✅ 季檢紀錄與簽名已成功送出！");
-          liff.closeWindow(); // 成功後直接關閉，不需解鎖
+          // 👇 核心修改：季檢表送出成功後的超級大視窗
+          Swal.fire({
+            icon: 'success',
+            title: '✅ 季檢紀錄已送出！',
+            text: '您的季檢表與簽名已安全存檔',
+            confirmButtonColor: '#27ae60', // 綠色按鈕
+            confirmButtonText: '關閉視窗',
+            allowOutsideClick: false // 強制使用者點擊按鈕才能關閉
+          }).then((res) => {
+            if (res.isConfirmed) {
+              liff.closeWindow(); // 點擊關閉視窗後自動離開 LINE LIFF
+            }
+          });
         } else {
-          alert("❌ 儲存失敗：" + result.status);
+          Swal.fire({ icon: 'error', title: '❌ 儲存失敗', text: result.status, confirmButtonText: '確定' });
           btn.disabled = false; // 失敗時恢復按鈕
           btn.innerText = "確認送出季檢表";
         }
       })
       .catch(err => {
-        alert("❌ 送出失敗: " + err.message);
+        Swal.fire({ icon: 'error', title: '❌ 送出失敗', text: err.message, confirmButtonText: '確定' });
         btn.disabled = false; // 失敗時恢復按鈕
         btn.innerText = "確認送出季檢表";
       });
