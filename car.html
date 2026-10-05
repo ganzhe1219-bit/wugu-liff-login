@@ -90,7 +90,7 @@
       <!-- 永遠顯示的選填措施欄位 -->
       <div class="form-group" id="memoGroup" style="margin-top:20px;">
         <label style="font-size: 24px; color: #2c3e50;">檢查結果採取或建議改善措施：</label>
-        <textarea id="note" rows="2" placeholder="無則免填"></textarea>
+        <textarea id="note" rows="2" placeholder="無則免填 (若有異常則必填)"></textarea>
       </div>
 
       <!-- 簽名板區塊 -->
@@ -150,7 +150,7 @@
     function checkUserStatus() {
       fetch(APPS_SCRIPT_URL, {
         method: 'POST',
-        headers: { 'Content-Type': 'text/plain;charset=utf-8' }, // 確保跨網域成功
+        headers: { 'Content-Type': 'text/plain;charset=utf-8' },
         body: JSON.stringify({ action: "checkUser", userId: currentUserId })
       }).then(res => res.json()).then(data => {
         document.getElementById('loading').classList.add('hidden');
@@ -178,7 +178,7 @@
       
       fetch(APPS_SCRIPT_URL, {
         method: 'POST',
-        headers: { 'Content-Type': 'text/plain;charset=utf-8' }, // 確保跨網域成功
+        headers: { 'Content-Type': 'text/plain;charset=utf-8' },
         body: JSON.stringify({ action: "register", userId: currentUserId, name: nameInput })
       }).then(res => res.json()).then(data => {
         Swal.fire({
@@ -230,7 +230,6 @@
         html += `<div class="form-group"><label>${idx + 1}. ${q}</label>`;
         
         if(q === "引擎機油") {
-          // 👇 將 50~80% 也改為綠色 (active normal)
           let highAct = (ans === '高於80%') ? 'active normal' : '';
           let midAct = (ans === '50~80%') ? 'active normal' : ''; 
           let lowAct = (ans === '50%以下') ? 'active abnormal' : '';
@@ -265,7 +264,6 @@
       updateAns(idx, val);
       document.querySelectorAll('.btn-q' + idx).forEach(btn => btn.classList.remove('active', 'normal', 'abnormal', 'na'));
       
-      // 👇 高於80% 與 50~80% 都會顯示綠色
       if(val === '高於80%' || val === '50~80%') element.classList.add('active', 'normal');
       if(val === '50%以下') element.classList.add('active', 'abnormal');
     }
@@ -336,6 +334,20 @@
       }
       const note = document.getElementById('note').value.trim();
       
+      // 👇 新增異常必填防呆機制
+      const hasAbnormal = currentAnswers.includes('異常') || currentAnswers.includes('50%以下');
+      if (hasAbnormal && note === "") {
+        Swal.fire({ 
+          icon: 'warning', 
+          title: '請填寫異常說明', 
+          text: '您有檢查項目標示為異常 (或機油過低)！請務必在下方欄位填寫說明。', 
+          confirmButtonText: '確定' 
+        }).then(() => {
+          document.getElementById('note').focus(); // 點擊確定後自動把畫面移到輸入框
+        });
+        return;
+      }
+
       if (!hasSigned) {
         Swal.fire({ icon: 'warning', title: '缺少簽名', text: '📝 請在最下方框框內親筆簽名！', confirmButtonText: '確定' });
         return;
@@ -367,12 +379,12 @@
           icon: 'success',
           title: '✅ 紀錄已送出！',
           text: '您的檢查表與簽名已安全存檔',
-          confirmButtonColor: '#27ae60', // 綠色按鈕
+          confirmButtonColor: '#27ae60',
           confirmButtonText: '關閉視窗',
-          allowOutsideClick: false // 強制使用者點擊按鈕才能關閉
+          allowOutsideClick: false 
         }).then((result) => {
           if (result.isConfirmed) {
-            liff.closeWindow(); // 點擊關閉視窗後自動離開 LINE LIFF
+            liff.closeWindow(); 
           }
         });
 
