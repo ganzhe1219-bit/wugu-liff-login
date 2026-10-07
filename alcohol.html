@@ -55,7 +55,7 @@
       <div id="driverName">姓名載入中...</div>
       
       <div id="buttonGroup">
-        <button id="btnPass" class="btn-pass" onclick="submitPass()">🟢 酒測值為 0</button>
+        <button id="btnPass" class="btn-pass" onclick="submitPass()">🟢 酒測值為 0 mg/L</button>
         <button id="btnFailMain" class="btn-fail" onclick="showAbnormalBox()">🔴 含有酒精反應</button>
       </div>
 
@@ -158,7 +158,7 @@
     function submitPass() {
       const btn = document.getElementById('btnPass');
       btn.innerText = '⏳ 資料送出中，請稍後...';
-      sendDataToGAS('數值為 0 (合格)', '');
+      sendDataToGAS('數值為 0.00 mg/L (合格)', '');
     }
 
     function showAbnormalBox() {
@@ -220,7 +220,7 @@
       .catch(error => {
         Swal.fire({ icon: 'error', title: '❌ 傳送失敗', text: '請檢查網路連線是否正常', confirmButtonText: '確定' });
         buttons.forEach(btn => btn.disabled = false);
-        document.getElementById('btnPass').innerText = '🟢 酒測值為 0';
+        document.getElementById('btnPass').innerText = '🟢 酒測值為 0.00 mg/L';
         document.getElementById('btnSubmitAbnormal').innerText = '⚠️ 確認送出異常紀錄';
       });
     }
