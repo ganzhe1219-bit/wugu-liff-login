@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>一般車輛自動檢查表(每季)</title>
   <script charset="utf-8" src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
-  <!-- 👇 引入 SweetAlert2 彈出視窗套件 -->
+  <!-- 引入 SweetAlert2 彈出視窗套件 -->
   <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
   <style>
     body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; padding: 10px; background: #f4f4f9; color: #111; margin: 0; }
@@ -51,7 +51,7 @@
     .btn-sub-2 { color: #7f8c8d; border-color: #7f8c8d; }
     .btn-sub-2.active { background: #7f8c8d; border-color: #7f8c8d; }
 
-    /* 👇 放大 SweetAlert2 視窗內的字體 */
+    /* 放大 SweetAlert2 視窗內的字體 */
     .swal2-title { font-size: 28px !important; }
     .swal2-html-container { font-size: 20px !important; }
     .swal2-confirm { font-size: 20px !important; padding: 12px 24px !important; }
@@ -85,13 +85,12 @@
         <label>車牌號碼：</label>
         <select id="vehicleId" required>
           <option value="">-- 請選擇車輛 --</option>
-          <!-- 已經幫你把 87 台車號完整加回來囉！ -->
           <option value="025-BX">025-BX</option>
           <option value="026-BX">026-BX</option>
           <option value="029-BY">029-BY</option>
           <option value="042-R5">042-R5</option>
           <option value="067-TH">067-TH</option>
-          <option value="067-TH">080-UY</option>
+          <option value="080-UY">080-UY</option>
           <option value="095-VK">095-VK</option>
           <option value="120-VK">120-VK</option>
           <option value="128-BY">128-BY</option>
@@ -200,7 +199,6 @@
   </div>
 
   <script>
-    // 👇👇👇 你的 GAS 與 LIFF ID 不變 👇👇👇
     const GAS_URL = "https://script.google.com/macros/s/AKfycbxD4AxVdWSMoFaawgupU2UqXgWr4-Ji1uoaud8U8SIVu-0tet8t2ZSa2Qwwi-T7LSkD/exec"; 
     const LIFF_ID = "2011658008-yf2pn9TM"; 
     
@@ -212,16 +210,15 @@
       { id: "item5", name: "5. 煞車油液位", method: "量尺上下刻度", options: ["正常", "異常", "無此項"], trigger: "異常" },
       { id: "item6", name: "6. 動力方向機油液位", method: "量尺上下刻度", options: ["正常", "異常", "無此項"], trigger: "異常" },
       { id: "item7", name: "7. 電瓶水液位檢查", method: "量尺上下刻度", options: ["正常", "異常", "無此項"], trigger: "異常" },
-      { id: "item8_1", name: "8. 雨刷水", method: "上下限刻度", options: ["正常", "異常", "無此項"], trigger: "異常" },
-      { id: "item8_2", name: "9. 水箱水位檢查", method: "量尺上下刻度", options: ["正常", "異常", "無此項"], trigger: "異常" },
-      { id: "item9", name: "10. 變速箱、P.T.O(扭力轉換器)、差速器", method: "目視、運轉測試", options: ["正常", "異常", "無此項"], trigger: "異常" },
-      { id: "item10", name: "11. 減震鋼板", method: "異常凸起、變形斷裂", options: ["良好", "異常", "無此項"], trigger: "異常" },
-      { id: "item11", name: "12. 附屬設備安全裝置", method: "滅火器、急救箱、安全帶", options: ["正常", "異常", "無此項"], trigger: "異常" },
-      { id: "item12", name: "13. 燈光、警示系統", method: "方向燈、遠近光等", options: ["正常", "異常", "無此項"], trigger: "異常" }
-      { id: "item13", name: "14. 操作駕駛駕照", method: "於有效日限", options: ["正常", "逾期"], trigger: "逾期" }
+      { id: "item8", name: "8. 雨刷水", method: "上下限刻度", options: ["正常", "異常", "無此項"], trigger: "異常" },
+      { id: "item9", name: "9. 水箱水位檢查", method: "量尺上下刻度", options: ["正常", "異常", "無此項"], trigger: "異常" },
+      { id: "item10", name: "10. 變速箱、P.T.O(扭力轉換器)、差速器", method: "目視、運轉測試", options: ["正常", "異常", "無此項"], trigger: "異常" },
+      { id: "item11", name: "11. 減震鋼板", method: "異常凸起、變形斷裂", options: ["良好", "異常", "無此項"], trigger: "異常" },
+      { id: "item12", name: "12. 附屬設備安全裝置", method: "滅火器、急救箱、安全帶", options: ["正常", "異常", "無此項"], trigger: "異常" },
+      { id: "item13", name: "13. 燈光、警示系統", method: "方向燈、遠近光等", options: ["正常", "異常", "無此項"], trigger: "異常" },
+      { id: "item14", name: "14. 操作駕駛駕照", method: "於有效日限", options: ["正常", "逾期", "0"], trigger: "逾期" }
     ];
 
-    // 動態產生按鈕版檢查項目
     const container = document.getElementById('inspectionItems');
     itemsData.forEach(item => {
       let defaultVal = item.options[0]; 
@@ -251,7 +248,6 @@
       container.innerHTML += html;
     });
 
-    // 處理按鈕點擊與顏色切換邏輯
     window.setQuarterlyStatus = function(id, val, triggerWord, clickedBtn) {
       document.getElementById(id).value = val;
       
@@ -271,7 +267,6 @@
       }
     };
 
-    // --- 簽名板功能 ---
     const canvas = document.getElementById('sigCanvas');
     const ctx = canvas.getContext('2d');
     let isDrawing = false;
@@ -328,7 +323,6 @@
       hasSigned = false;
     };
 
-    // --- 登入與資料驗證 ---
     let currentUserId = "";
 
     window.onload = function() {
@@ -458,6 +452,7 @@
         item10: getCombinedResult("item10"),
         item11: getCombinedResult("item11"),
         item12: getCombinedResult("item12"),
+        item13: getCombinedResult("item13"),
         measureNote: document.getElementById('measureNote').value,
         signature: canvas.toDataURL("image/png")
       };
@@ -470,28 +465,27 @@
       .then(res => res.json())
       .then(result => {
         if (result.status === "Success") {
-          // 👇 核心修改：季檢表送出成功後的超級大視窗
           Swal.fire({
             icon: 'success',
             title: '✅ 季檢紀錄已送出！',
             text: '您的季檢表與簽名已安全存檔',
-            confirmButtonColor: '#27ae60', // 綠色按鈕
+            confirmButtonColor: '#27ae60',
             confirmButtonText: '關閉視窗',
-            allowOutsideClick: false // 強制使用者點擊按鈕才能關閉
+            allowOutsideClick: false
           }).then((res) => {
             if (res.isConfirmed) {
-              liff.closeWindow(); // 點擊關閉視窗後自動離開 LINE LIFF
+              liff.closeWindow();
             }
           });
         } else {
           Swal.fire({ icon: 'error', title: '❌ 儲存失敗', text: result.status, confirmButtonText: '確定' });
-          btn.disabled = false; // 失敗時恢復按鈕
+          btn.disabled = false;
           btn.innerText = "確認送出季檢表";
         }
       })
       .catch(err => {
         Swal.fire({ icon: 'error', title: '❌ 送出失敗', text: err.message, confirmButtonText: '確定' });
-        btn.disabled = false; // 失敗時恢復按鈕
+        btn.disabled = false;
         btn.innerText = "確認送出季檢表";
       });
     }
